@@ -13,6 +13,8 @@ import { PremiumSection } from './components/PremiumSection';
 import { AITutor } from './components/AITutor';
 import { StudyPlan } from './components/StudyPlan';
 import { OnboardingFlow } from './components/OnboardingFlow';
+import { ReviewSection } from './components/ReviewSection';
+import { ParentReport } from './components/ParentReport';
 import { auth, getUserProfile } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, Crown, GraduationCap } from 'lucide-react';
@@ -569,8 +571,14 @@ export default function App() {
 
       </main>
 
+      {/* PARENT REPORT SECTION */}
+      <ParentReport />
+
       {/* PREMIUM SECTION */}
       <PremiumSection />
+
+      {/* REVIEWS SECTION */}
+      <ReviewSection />
 
       {/* READER MODAL */}
       <div id="reader-modal">

@@ -18,7 +18,10 @@ export interface ParentInfo {
 export interface UserContextType {
   uid: string | null;
   isPremium: boolean;
+  isTrialActive: boolean;
+  trialDaysRemaining: number;
   premiumTier: 'free' | 'scholar' | 'premium' | 'elite';
+  effectiveTier: 'free' | 'scholar' | 'premium' | 'elite';
   classLevel: ClassLevel | null;
   subjects: Subject[];
   parentInfo: ParentInfo | null;
@@ -33,12 +36,22 @@ export interface UserContextType {
   loading: boolean;
 }
 
+const TRIAL_DAYS = 30;
+
+function calcTrialDays(trialStartMs: number): number {
+  const elapsed = Math.floor((Date.now() - trialStartMs) / (1000 * 60 * 60 * 24));
+  return Math.max(0, TRIAL_DAYS - elapsed);
+}
+
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [uid, setUid] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [premiumTier, setPremiumTier] = useState<'free' | 'scholar' | 'premium' | 'elite'>('free');
+  const [isTrialActive, setIsTrialActive] = useState(false);
+  const [trialDaysRemaining, setTrialDaysRemaining] = useState(TRIAL_DAYS);
+  const [effectiveTier, setEffectiveTier] = useState<'free' | 'scholar' | 'premium' | 'elite'>('free');
   const [classLevel, setClassLevelState] = useState<ClassLevel | null>(null);
   const [subjects, setSubjectsState] = useState<Subject[]>([]);
   const [parentInfo, setParentInfoState] = useState<ParentInfo | null>(null);
@@ -65,6 +78,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             setIsPremium(tier !== 'free');
             if (profile.displayName) setDisplayName(profile.displayName);
             if (profile.photoURL) setPhotoURL(profile.photoURL);
+
+            // Trial calculation
+            let trialMs: number | null = null;
+            const rawTrial = (profile as any).trialStartDate;
+            if (rawTrial) {
+              trialMs = rawTrial.toDate ? rawTrial.toDate().getTime() : new Date(rawTrial).getTime();
+            } else {
+              // Set trial start date for first-time users who don't have one yet
+              trialMs = Date.now();
+              updateUserProfile(user.uid, { trialStartDate: new Date() } as any).catch(() => {});
+            }
+            const daysLeft = calcTrialDays(trialMs ?? Date.now());
+            const trialOn = daysLeft > 0;
+            setTrialDaysRemaining(daysLeft);
+            setIsTrialActive(trialOn);
+            // Effective tier: trial gives elite access
+            setEffectiveTier(trialOn ? 'elite' : tier);
           }
         } catch {
           // ignore
@@ -79,6 +109,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setHasCompletedOnboarding(false);
         setPremiumTier('free');
         setIsPremium(false);
+        setIsTrialActive(false);
+        setTrialDaysRemaining(0);
+        setEffectiveTier('free');
       }
       setLoading(false);
     });
@@ -117,15 +150,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const upgradeToPremium = useCallback((tier: 'scholar' | 'premium' | 'elite') => {
     setPremiumTier(tier);
     setIsPremium(true);
+    // Keep effective tier as max of trial/paid
+    setEffectiveTier(isTrialActive ? 'elite' : tier);
     if (uid) updateUserProfile(uid, { premiumTier: tier } as any).catch(() => {});
-  }, [uid]);
+  }, [uid, isTrialActive]);
 
   return (
     <UserContext.Provider value={{
-      uid, isPremium, premiumTier, classLevel, subjects, parentInfo,
-      displayName, photoURL, hasCompletedOnboarding,
-      setClassLevel, setSubjects, setParentInfo, completeOnboarding,
-      upgradeToPremium, loading,
+      uid, isPremium, isTrialActive, trialDaysRemaining, premiumTier, effectiveTier,
+      classLevel, subjects, parentInfo, displayName, photoURL, hasCompletedOnboarding,
+      setClassLevel, setSubjects, setParentInfo, completeOnboarding, upgradeToPremium, loading,
     }}>
       {children}
     </UserContext.Provider>

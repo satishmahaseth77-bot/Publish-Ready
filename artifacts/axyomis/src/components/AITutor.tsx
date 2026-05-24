@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, BookOpen, Video, Brain, ClipboardList, ChevronRight, Loader2, Sparkles, Play, ExternalLink, CheckCircle2, XCircle, RefreshCw, Crown, Lock, GraduationCap, ChevronDown, MessageSquare } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useUser } from '../context/UserContext';
+import { logActivity } from '../services/activityService';
 import { fetchMultilingualVideos, VideoGroup } from '../services/youtubeService';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -100,7 +101,8 @@ interface AITutorProps {
 }
 
 export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
-  const { classLevel, subjects, isPremium } = useUser();
+  const { classLevel, subjects, isPremium, isTrialActive, uid } = useUser() as any;
+  const canAccessPremium = isPremium || isTrialActive;
   const [selectedSubject, setSelectedSubject] = useState<string>(subjects[0] || 'Physics');
   const [selectedChapter, setSelectedChapter] = useState<string>('');
   const [activeTab, setActiveTab] = useState<Tab>('lesson');
@@ -133,6 +135,8 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
     setQuizSubmitted(false);
     setActiveTab('lesson');
     setLoading(true);
+    // Log chapter activity
+    if (uid) logActivity(uid, { type: 'chapter', subject: selectedSubject, topic: chapter });
     try {
       const lesson = await generateLesson(selectedSubject, chapter, effectiveClass);
       setLessonContent(lesson);
@@ -140,7 +144,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
       setLessonContent('Failed to load lesson. Please try again.');
     }
     setLoading(false);
-  }, [selectedSubject, effectiveClass]);
+  }, [selectedSubject, effectiveClass, uid]);
 
   const loadTab = useCallback(async (tab: Tab) => {
     setActiveTab(tab);
@@ -225,7 +229,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {!isPremium && (
+              {!canAccessPremium && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
                   <Crown className="w-3 h-3 text-amber-400" />
                   <span className="text-[9px] font-black uppercase tracking-widest text-amber-400">Upgrade for full access</span>
@@ -244,7 +248,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
               <div className="p-3 border-b border-white/5">
                 <div className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-2 px-1">Subject</div>
                 <div className="space-y-1">
-                  {(subjects.length > 0 ? subjects : ['Physics']).map(s => (
+                  {(subjects.length > 0 ? subjects : ['Physics']).map((s: string) => (
                     <button
                       key={s}
                       onClick={() => { setSelectedSubject(s); setSelectedChapter(''); setLessonContent(''); }}
@@ -309,7 +313,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
                     {/* Tabs */}
                     <div className="flex gap-1">
                       {TABS.map(tab => {
-                        const locked = tab.premiumOnly && !isPremium;
+                        const locked = tab.premiumOnly && !canAccessPremium;
                         return (
                           <button
                             key={tab.id}
@@ -348,7 +352,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
 
                         {activeTab === 'summary' && (
                           <motion.div key="summary" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            {!isPremium ? (
+                            {!canAccessPremium ? (
                               <PremiumGate feature="AI Chapter Summaries" />
                             ) : summaryContent ? (
                               <div className="prose prose-invert prose-sm max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:tracking-wider prose-headings:text-amber-400 prose-strong:text-white">
@@ -366,7 +370,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
 
                         {activeTab === 'quiz' && (
                           <motion.div key="quiz" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            {!isPremium ? (
+                            {!canAccessPremium ? (
                               <PremiumGate feature="Live Quiz Engine" />
                             ) : quizQuestions.length > 0 ? (
                               <QuizPanel

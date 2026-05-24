@@ -73,7 +73,8 @@ Include 2-4 sessions per day, mixing subjects. Types: lesson, practice, revision
 }
 
 export const StudyPlan: React.FC = () => {
-  const { classLevel, subjects, isPremium } = useUser();
+  const { classLevel, subjects, isPremium, isTrialActive } = useUser() as any;
+  const canAccess = isPremium || isTrialActive;
   const [plan, setPlan] = useState<StudyPlanData | null>(null);
   const [loading, setLoading] = useState(false);
   const [hoursPerDay, setHoursPerDay] = useState(2);
@@ -112,7 +113,7 @@ export const StudyPlan: React.FC = () => {
   const completedCount = completedSessions.size;
   const progress = totalSessions > 0 ? (completedCount / totalSessions) * 100 : 0;
 
-  if (!isPremium) {
+  if (!canAccess) {
     return (
       <section id="study-plan" className="max-w-7xl mx-auto px-8 mb-32">
         <div className="text-center py-16 border border-white/5 rounded-3xl bg-white/[0.01]">
