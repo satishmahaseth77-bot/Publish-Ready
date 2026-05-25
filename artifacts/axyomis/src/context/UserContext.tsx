@@ -15,6 +15,13 @@ export interface ParentInfo {
   whatsapp: string;
 }
 
+export interface StudentProfile {
+  studentName?: string;
+  dateOfBirth?: string;
+  country?: string;
+  curriculum?: string;
+}
+
 export interface UserContextType {
   uid: string | null;
   isPremium: boolean;
@@ -25,13 +32,22 @@ export interface UserContextType {
   classLevel: ClassLevel | null;
   subjects: Subject[];
   parentInfo: ParentInfo | null;
+  secondaryParent: ParentInfo | null;
+  studentProfile: StudentProfile | null;
   displayName: string | null;
   photoURL: string | null;
   hasCompletedOnboarding: boolean;
   setClassLevel: (level: ClassLevel) => void;
   setSubjects: (subjects: Subject[]) => void;
   setParentInfo: (info: ParentInfo) => void;
-  completeOnboarding: (data: { classLevel: ClassLevel; subjects: Subject[]; parentInfo?: ParentInfo }) => Promise<void>;
+  setSecondaryParent: (info: ParentInfo) => void;
+  completeOnboarding: (data: {
+    classLevel: ClassLevel;
+    subjects: Subject[];
+    parentInfo?: ParentInfo;
+    secondaryParent?: ParentInfo;
+    studentProfile?: StudentProfile;
+  }) => Promise<void>;
   upgradeToPremium: (tier: 'scholar' | 'premium' | 'elite') => void;
   loading: boolean;
 }
@@ -55,6 +71,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [classLevel, setClassLevelState] = useState<ClassLevel | null>(null);
   const [subjects, setSubjectsState] = useState<Subject[]>([]);
   const [parentInfo, setParentInfoState] = useState<ParentInfo | null>(null);
+  const [secondaryParent, setSecondaryParentState] = useState<ParentInfo | null>(null);
+  const [studentProfile, setStudentProfileState] = useState<StudentProfile | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
@@ -72,6 +90,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             setClassLevelState((profile as any).classLevel || null);
             setSubjectsState((profile as any).subjects || []);
             setParentInfoState((profile as any).parentInfo || null);
+            setSecondaryParentState((profile as any).secondaryParent || null);
+            setStudentProfileState((profile as any).studentProfile || null);
             setHasCompletedOnboarding(!!(profile as any).classLevel);
             const tier = (profile as any).premiumTier || 'free';
             setPremiumTier(tier);
@@ -79,13 +99,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             if (profile.displayName) setDisplayName(profile.displayName);
             if (profile.photoURL) setPhotoURL(profile.photoURL);
 
-            // Trial calculation
             let trialMs: number | null = null;
             const rawTrial = (profile as any).trialStartDate;
             if (rawTrial) {
               trialMs = rawTrial.toDate ? rawTrial.toDate().getTime() : new Date(rawTrial).getTime();
             } else {
-              // Set trial start date for first-time users who don't have one yet
               trialMs = Date.now();
               updateUserProfile(user.uid, { trialStartDate: new Date() } as any).catch(() => {});
             }
@@ -93,7 +111,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             const trialOn = daysLeft > 0;
             setTrialDaysRemaining(daysLeft);
             setIsTrialActive(trialOn);
-            // Effective tier: trial gives elite access
             setEffectiveTier(trialOn ? 'elite' : tier);
           }
         } catch {
@@ -106,6 +123,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setClassLevelState(null);
         setSubjectsState([]);
         setParentInfoState(null);
+        setSecondaryParentState(null);
+        setStudentProfileState(null);
         setHasCompletedOnboarding(false);
         setPremiumTier('free');
         setIsPremium(false);
@@ -133,16 +152,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (uid) updateUserProfile(uid, { parentInfo: info } as any).catch(() => {});
   }, [uid]);
 
-  const completeOnboarding = useCallback(async (data: { classLevel: ClassLevel; subjects: Subject[]; parentInfo?: ParentInfo }) => {
+  const setSecondaryParent = useCallback((info: ParentInfo) => {
+    setSecondaryParentState(info);
+    if (uid) updateUserProfile(uid, { secondaryParent: info } as any).catch(() => {});
+  }, [uid]);
+
+  const completeOnboarding = useCallback(async (data: {
+    classLevel: ClassLevel;
+    subjects: Subject[];
+    parentInfo?: ParentInfo;
+    secondaryParent?: ParentInfo;
+    studentProfile?: StudentProfile;
+  }) => {
     setClassLevelState(data.classLevel);
     setSubjectsState(data.subjects);
     if (data.parentInfo) setParentInfoState(data.parentInfo);
+    if (data.secondaryParent) setSecondaryParentState(data.secondaryParent);
+    if (data.studentProfile) setStudentProfileState(data.studentProfile);
     setHasCompletedOnboarding(true);
     if (uid) {
       await updateUserProfile(uid, {
         classLevel: data.classLevel,
         subjects: data.subjects,
         ...(data.parentInfo ? { parentInfo: data.parentInfo } : {}),
+        ...(data.secondaryParent ? { secondaryParent: data.secondaryParent } : {}),
+        ...(data.studentProfile ? { studentProfile: data.studentProfile } : {}),
       } as any);
     }
   }, [uid]);
@@ -150,7 +184,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const upgradeToPremium = useCallback((tier: 'scholar' | 'premium' | 'elite') => {
     setPremiumTier(tier);
     setIsPremium(true);
-    // Keep effective tier as max of trial/paid
     setEffectiveTier(isTrialActive ? 'elite' : tier);
     if (uid) updateUserProfile(uid, { premiumTier: tier } as any).catch(() => {});
   }, [uid, isTrialActive]);
@@ -158,8 +191,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   return (
     <UserContext.Provider value={{
       uid, isPremium, isTrialActive, trialDaysRemaining, premiumTier, effectiveTier,
-      classLevel, subjects, parentInfo, displayName, photoURL, hasCompletedOnboarding,
-      setClassLevel, setSubjects, setParentInfo, completeOnboarding, upgradeToPremium, loading,
+      classLevel, subjects, parentInfo, secondaryParent, studentProfile,
+      displayName, photoURL, hasCompletedOnboarding,
+      setClassLevel, setSubjects, setParentInfo, setSecondaryParent, completeOnboarding, upgradeToPremium, loading,
     }}>
       {children}
     </UserContext.Provider>
