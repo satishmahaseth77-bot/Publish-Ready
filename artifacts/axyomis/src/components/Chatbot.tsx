@@ -572,10 +572,11 @@ interface ChatSession {
 interface ChatbotProps {
   onStateChange?: (isOpen: boolean) => void;
   externalOpen?: boolean;
+  hideToggle?: boolean;
   startInConversationMode?: boolean;
 }
 
-export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, startInConversationMode }) => {
+export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, startInConversationMode, hideToggle }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onStateChangeRef = useRef(onStateChange);
@@ -1068,7 +1069,6 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
   };
 
   useEffect(() => {
-    onStateChangeRef.current?.(isOpen);
     if (isOpen) {
       const bootPhrase = "HELLO I AM ASTRA THE ROBO SPEED ONE TERAHEARTZ MEMORY ONE ZETABYTE";
 
@@ -1328,7 +1328,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
             initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
             animate={{ opacity: 1, backdropFilter: "blur(40px)" }}
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-            className="fixed inset-0 z-[100] bg-black/60 flex flex-col md:flex-row overflow-hidden font-sans selection:bg-blue-500/20"
+            className="fixed inset-0 z-[400] bg-black/60 flex flex-col md:flex-row overflow-hidden font-sans selection:bg-blue-500/20"
           >
             {/* Sidebar (Desktop) */}
             <motion.div 
@@ -1492,7 +1492,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                     <Settings className="w-5 h-5" />
                   </button>
                   <button 
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => { setIsOpen(false); onStateChangeRef.current?.(false); }}
                     className="p-3 hover:bg-white/5 rounded-xl transition-all text-slate-500 hover:text-white"
                   >
                     <X className="w-6 h-6" />
@@ -2180,15 +2180,21 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
         whileHover={{ scale: 1.1, rotate: 8 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => {
-          if (!audioContextRef.current) {
-            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-          }
-          if (audioContextRef.current.state === 'suspended') {
-            audioContextRef.current.resume();
-          }
-          setIsOpen(!isOpen);
+          try {
+            const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
+            if (Ctx && !audioContextRef.current) {
+              audioContextRef.current = new Ctx();
+            }
+            if (audioContextRef.current?.state === 'suspended') {
+              audioContextRef.current.resume().catch(() => {});
+            }
+          } catch {}
+          const next = !isOpen;
+          setIsOpen(next);
+          onStateChangeRef.current?.(next);
         }}
-        className="fixed bottom-10 right-10 z-[150] w-24 h-24 rounded-[40px] bg-black border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,1)] flex items-center justify-center transition-all group overflow-hidden"
+        style={{ display: hideToggle ? 'none' : undefined }}
+        className="fixed bottom-10 right-10 z-[140] w-24 h-24 rounded-[40px] bg-black border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,1)] flex items-center justify-center transition-all group overflow-hidden"
         id="toggle-astra"
       >
         <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/20 transition-all opacity-0 group-hover:opacity-100 duration-500" />

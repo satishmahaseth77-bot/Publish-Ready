@@ -705,11 +705,12 @@ export default function App() {
           </div>
         </div>
       </footer>
-      <GlobalPopups isChatOpen={isChatOpen} />
+      <GlobalPopups isChatOpen={isChatOpen} isTutorOpen={isAITutorOpen} />
       <Chatbot 
         onStateChange={handleChatStateChange} 
         externalOpen={isChatOpen}
         startInConversationMode={talkModeEnabled}
+        hideToggle={isAITutorOpen}
       />
       <Profile isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
       <AITutor isOpen={isAITutorOpen} onClose={() => setIsAITutorOpen(false)} onOpenChat={() => { setIsAITutorOpen(false); setIsChatOpen(true); }} />

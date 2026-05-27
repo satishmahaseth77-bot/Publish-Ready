@@ -41,18 +41,18 @@ const COLOR_MAP: Record<string, { border: string; shadow: string; icon: string; 
   teal:    { border: 'border-teal-500/40',    shadow: 'shadow-teal-500/20',    icon: 'text-teal-400',    bg: 'bg-teal-500/10' },
 };
 
-export const GlobalPopups: React.FC<{ isChatOpen?: boolean }> = ({ isChatOpen }) => {
+export const GlobalPopups: React.FC<{ isChatOpen?: boolean; isTutorOpen?: boolean }> = ({ isChatOpen, isTutorOpen }) => {
   const [currentIdx, setCurrentIdx] = useState(-1);
   const [dismissed, setDismissed] = useState(false);
+  const suppress = !!(isChatOpen || isTutorOpen);
 
   useEffect(() => {
-    if (isChatOpen) {
+    if (suppress) {
       setCurrentIdx(-1);
       return;
     }
 
     const show = () => {
-      if (isChatOpen) return;
       if (Math.random() > 0.35) {
         setDismissed(false);
         setCurrentIdx(Math.floor(Math.random() * MESSAGES.length));
@@ -63,7 +63,9 @@ export const GlobalPopups: React.FC<{ isChatOpen?: boolean }> = ({ isChatOpen })
     const initial = setTimeout(show, 4000);
     const interval = setInterval(show, 18000);
     return () => { clearTimeout(initial); clearInterval(interval); };
-  }, [isChatOpen]);
+  }, [suppress]);
+
+  if (suppress) return null;
 
   const msg = currentIdx >= 0 ? MESSAGES[currentIdx] : null;
   const colors = msg ? (COLOR_MAP[msg.color] || COLOR_MAP.cyan) : null;
@@ -87,11 +89,11 @@ export const GlobalPopups: React.FC<{ isChatOpen?: boolean }> = ({ isChatOpen })
               {msg.text}
             </p>
             <button
-              onClick={() => { setDismissed(true); setCurrentIdx(-1); }}
-              className="w-6 h-6 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center flex-shrink-0 transition-colors mt-0.5"
+              onClick={(e) => { e.stopPropagation(); setDismissed(true); setCurrentIdx(-1); }}
+              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-red-500/30 border border-white/15 hover:border-red-500/50 flex items-center justify-center flex-shrink-0 transition-colors mt-0.5 cursor-pointer"
               aria-label="Dismiss"
             >
-              <X className="w-3 h-3 text-slate-500" />
+              <X className="w-4 h-4 text-white" />
             </button>
           </motion.div>
         )}
