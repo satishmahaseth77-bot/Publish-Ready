@@ -25,8 +25,20 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
   const smoothRef = useRef(0);
   const phaseRef = useRef(0);
 
+  // Mobile / reduced-motion detection — used to lower visual cost
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
+  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sparkleCount = isMobile ? 6 : 14;
+
   useEffect(() => {
+    let paused = document.hidden;
+    const onVis = () => {
+      paused = document.hidden;
+      if (!paused) rafRef.current = requestAnimationFrame(tick);
+    };
+    document.addEventListener('visibilitychange', onVis);
     const tick = () => {
+      if (paused) return;
       let level = 0;
       const analyser = analyserRef?.current;
       if (analyser && (state === 'speaking' || state === 'listening')) {
@@ -74,7 +86,10 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, [state, analyserRef]);
 
   const palette = STATE_PALETTE[state];
@@ -93,7 +108,7 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
         className="absolute inset-0 rounded-full will-change-transform"
         style={{
           background: conic,
-          filter: 'blur(60px) saturate(140%)',
+          filter: `blur(${isMobile ? 36 : 60}px) saturate(140%)`,
           opacity: 0.5,
           transition: 'opacity 200ms linear',
         }}
@@ -102,7 +117,7 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
       {/* Rotating outer ring */}
       <motion.div
         ref={ringRef}
-        animate={{ rotate: 360 }}
+        animate={prefersReducedMotion ? undefined : { rotate: 360 }}
         transition={{ duration: ringSpeed, repeat: Infinity, ease: 'linear' }}
         className="absolute inset-[-6%] rounded-full will-change-transform"
         style={{
@@ -116,7 +131,7 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
 
       {/* Rotating inner gradient body */}
       <motion.div
-        animate={{ rotate: -360 }}
+        animate={prefersReducedMotion ? undefined : { rotate: -360 }}
         transition={{ duration: innerSpeed, repeat: Infinity, ease: 'linear' }}
         className="absolute inset-[12%] rounded-full"
         style={{
@@ -157,8 +172,8 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
 
       {/* Drifting sparkles */}
       <div className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
-        {Array.from({ length: 14 }).map((_, i) => {
-          const angle = (i / 14) * Math.PI * 2;
+        {Array.from({ length: sparkleCount }).map((_, i) => {
+          const angle = (i / sparkleCount) * Math.PI * 2;
           const r = size * 0.46;
           const x = Math.cos(angle) * r;
           const y = Math.sin(angle) * r;

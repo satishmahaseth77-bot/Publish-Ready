@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Calendar, Clock, Target, BookOpen, ChevronRight, Loader2, Sparkles, Crown, Lock, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useUser } from '../context/UserContext';
+import { UpgradeModal } from './UpgradeModal';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -78,6 +79,7 @@ export const StudyPlan: React.FC = () => {
   const [plan, setPlan] = useState<StudyPlanData | null>(null);
   const [loading, setLoading] = useState(false);
   const [hoursPerDay, setHoursPerDay] = useState(2);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [completedSessions, setCompletedSessions] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
 
@@ -115,17 +117,24 @@ export const StudyPlan: React.FC = () => {
 
   if (!canAccess) {
     return (
-      <section id="study-plan" className="max-w-7xl mx-auto px-8 mb-32">
-        <div className="text-center py-16 border border-white/5 rounded-3xl bg-white/[0.01]">
+      <section id="study-plan" className="max-w-7xl mx-auto px-4 sm:px-8 mb-32">
+        <div className="text-center py-12 sm:py-16 border border-white/5 rounded-3xl bg-white/[0.01]">
           <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
             <Crown className="w-8 h-8 text-amber-400" />
           </div>
-          <h3 className="text-2xl font-black uppercase tracking-widest text-white mb-2">AI Study Plan</h3>
-          <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">Get a personalised week-by-week AI study schedule tailored to your class level and subjects.</p>
-          <a href="#premium-section" className="px-6 py-3 bg-amber-500 rounded-2xl text-black font-black uppercase tracking-widest text-[10px] hover:bg-amber-400 transition-colors inline-flex items-center gap-2">
+          <h3 className="text-xl sm:text-2xl font-black uppercase tracking-widest text-white mb-2">AI Study Plan</h3>
+          <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto px-4">Get a personalised week-by-week AI study schedule tailored to your class level and subjects.</p>
+          <button onClick={() => setShowUpgrade(true)} className="px-6 py-3 bg-amber-500 rounded-2xl text-black font-black uppercase tracking-widest text-[10px] hover:bg-amber-400 transition-colors inline-flex items-center gap-2">
             <Crown className="w-4 h-4" /> Unlock with Premium
-          </a>
+          </button>
         </div>
+        <UpgradeModal
+          open={showUpgrade}
+          onClose={() => setShowUpgrade(false)}
+          featureName="AI Study Plan"
+          requiredTier="premium"
+          description="builds you a personalised week-by-week study schedule based on your class and subjects."
+        />
       </section>
     );
   }

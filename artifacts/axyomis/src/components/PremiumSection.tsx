@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Check, X, Crown, Star, Users, BarChart3, Video, Sparkles, GraduationCap, Clock, Bell, Shield, Timer, Zap, Lock } from 'lucide-react';
+import { Check, X, Crown, Star, BarChart3, Video, Sparkles, GraduationCap, Clock, Bell, Shield, Timer, Zap } from 'lucide-react';
 import { useUser } from '../context/UserContext';
+import { useCurrency } from '../hooks/useCurrency';
 
 const PLANS = [
   {
@@ -158,8 +159,12 @@ function ComingSoonBadge() {
 
 export const PremiumSection: React.FC = () => {
   const { isPremium, premiumTier, effectiveTier, isTrialActive, trialDaysRemaining, upgradeToPremium, uid } = useUser();
+  const { pricing, format, currency } = useCurrency();
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
   const [selectedUpgrade, setSelectedUpgrade] = useState<string | null>(null);
+
+  const localPriceFor = (id: 'free' | 'scholar' | 'premium' | 'elite') =>
+    id === 'free' ? null : pricing[id];
 
   const handleUpgrade = (tier: 'scholar' | 'premium' | 'elite') => {
     if (!uid) { alert('Please sign in to upgrade your plan.'); return; }
@@ -259,14 +264,22 @@ export const PremiumSection: React.FC = () => {
                 <div className="p-6 flex flex-col h-full relative z-10">
                   <div className="mb-5">
                     <div className={`text-[10px] font-black uppercase tracking-[0.3em] mb-2 ${plan.accentColor}`}>{plan.name}</div>
-                    <div className="flex items-baseline gap-1">
+                    <div className="flex items-baseline gap-1 flex-wrap">
                       {plan.price === 0 ? (
                         <span className="text-4xl font-black text-white">Free</span>
                       ) : (
-                        <><span className="text-4xl font-black text-white">${plan.price}</span><span className="text-slate-500 text-sm">/{plan.period}</span></>
+                        <>
+                          <span className="text-4xl font-black text-white">{format(localPriceFor(plan.id) ?? plan.price)}</span>
+                          <span className="text-slate-500 text-sm">/{plan.period}</span>
+                        </>
                       )}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">{plan.tagline}</p>
+                    {plan.price !== 0 && (
+                      <p className="text-[9px] text-slate-600 mt-1 flex items-center gap-1 uppercase tracking-widest">
+                        <span>{currency.flag}</span> Local price · {currency.code}
+                      </p>
+                    )}
                   </div>
 
                   {/* CTA Button */}

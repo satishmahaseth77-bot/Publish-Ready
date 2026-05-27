@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mail, BookOpen, Brain, Clock, Award, BarChart3, Send, Copy, Check, Loader2, TrendingUp, Target, AlertCircle, RefreshCw } from 'lucide-react';
 import { useUser } from '../context/UserContext';
+import { UpgradeModal } from './UpgradeModal';
 import { getTodayActivity, getWeekActivity, type ActivityEntry } from '../services/activityService';
 
 interface ReportData {
@@ -142,6 +143,7 @@ export const ParentReport: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [error, setError] = useState('');
 
   const canAccess = isPremium || isTrialActive;
@@ -207,19 +209,26 @@ export const ParentReport: React.FC = () => {
 
   if (!canAccess) {
     return (
-      <section id="parent-report" className="max-w-7xl mx-auto px-8 mb-24">
-        <div className="p-8 rounded-3xl border border-white/5 bg-white/[0.01] flex items-center gap-6">
+      <section id="parent-report" className="max-w-7xl mx-auto px-4 sm:px-8 mb-24">
+        <div className="p-6 sm:p-8 rounded-3xl border border-white/5 bg-white/[0.01] flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
             <Mail className="w-7 h-7 text-cyan-400" />
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="text-white font-black uppercase tracking-wider text-base mb-1">Daily Parent Report</h3>
             <p className="text-slate-500 text-sm">Email a daily progress summary to your parent/guardian. Available on Premium plan.</p>
           </div>
-          <a href="#premium-section" className="ml-auto px-5 py-2.5 bg-cyan-500 rounded-xl text-black font-black uppercase tracking-widest text-[10px] hover:bg-cyan-400 transition-colors flex-shrink-0">
+          <button onClick={() => setShowUpgrade(true)} className="w-full sm:w-auto sm:ml-auto px-5 py-2.5 bg-cyan-500 rounded-xl text-black font-black uppercase tracking-widest text-[10px] hover:bg-cyan-400 transition-colors flex-shrink-0">
             Upgrade
-          </a>
+          </button>
         </div>
+        <UpgradeModal
+          open={showUpgrade}
+          onClose={() => setShowUpgrade(false)}
+          featureName="Daily Parent Report"
+          requiredTier="premium"
+          description="emails your parents a daily summary of your study progress, quiz scores, and AI tutor sessions."
+        />
       </section>
     );
   }

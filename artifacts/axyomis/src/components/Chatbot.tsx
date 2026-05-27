@@ -651,7 +651,9 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
     }
   }, [externalOpen, startInConversationMode, isOpen]);
   const bootCycleRef = useRef(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
+    typeof window === 'undefined' ? true : !window.matchMedia('(max-width: 767px)').matches
+  );
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -1068,6 +1070,10 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
   const loadSession = (session: ChatSession) => {
     setMessages(session.messages);
     setActiveSessionId(session.id);
+    // Close the drawer on mobile after picking a session
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const deleteSession = (e: React.MouseEvent, id: string) => {
@@ -1348,16 +1354,23 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
             className="fixed inset-0 z-[400] bg-black/60 flex flex-col md:flex-row overflow-hidden font-sans selection:bg-blue-500/20"
           >
-            {/* Sidebar (Desktop) */}
-            <motion.div 
+            {/* Mobile sidebar backdrop */}
+            {isSidebarOpen && (
+              <div
+                onClick={() => setIsSidebarOpen(false)}
+                className="md:hidden fixed inset-0 z-[10] bg-black/60 backdrop-blur-sm"
+              />
+            )}
+            {/* Sidebar (drawer on mobile, in-flow on desktop) */}
+            <motion.div
               initial={false}
-              animate={{ 
+              animate={{
                 width: isSidebarOpen ? 340 : 0,
                 opacity: isSidebarOpen ? 1 : 0,
                 x: isSidebarOpen ? 0 : -20
               }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="hidden md:flex flex-col h-full bg-[#050505]/80 border-r border-white/5 relative overflow-hidden backdrop-blur-xl"
+              className={`${isSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col h-full bg-[#050505]/95 border-r border-white/5 relative overflow-hidden backdrop-blur-xl fixed md:relative inset-y-0 left-0 z-[20] md:z-auto`}
             >
               <div className="w-[340px] h-full flex flex-col p-10 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent">
                 <div className="flex items-center gap-5 mb-14">

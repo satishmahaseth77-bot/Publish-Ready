@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useUser } from '../context/UserContext';
+import { UpgradeModal } from './UpgradeModal';
 import { logActivity } from '../services/activityService';
 import { fetchMultilingualVideos, VideoGroup } from '../services/youtubeService';
 import Markdown from 'react-markdown';
@@ -611,16 +612,24 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat })
 };
 
 function PremiumGate({ feature }: { feature: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-col items-center justify-center h-48 text-center">
+    <div className="flex flex-col items-center justify-center h-48 text-center px-4">
       <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
         <Crown className="w-7 h-7 text-amber-400" />
       </div>
       <h4 className="text-white font-black uppercase tracking-wider text-sm mb-1">{feature}</h4>
       <p className="text-slate-500 text-xs mb-4">Available on Scholar plan and above.</p>
-      <a href="#premium-section" className="px-5 py-2 bg-amber-500 rounded-xl text-black font-black uppercase tracking-widest text-[10px] hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20">
-        View Plans
-      </a>
+      <button onClick={() => setOpen(true)} className="px-5 py-2 bg-amber-500 rounded-xl text-black font-black uppercase tracking-widest text-[10px] hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20">
+        Unlock now
+      </button>
+      <UpgradeModal
+        open={open}
+        onClose={() => setOpen(false)}
+        featureName={feature}
+        requiredTier="scholar"
+        description="is part of the Scholar plan — unlock chapter summaries, live quizzes, and AI-tutored lessons."
+      />
     </div>
   );
 }
