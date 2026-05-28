@@ -8,7 +8,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import mermaid from 'mermaid';
-import { AstraOrb, type OrbState } from './AstraOrb';
+import { AstraOrb, GeminiWave, GeminiGlow, type OrbState } from './AstraOrb';
 import { useUser } from '../context/UserContext';
 
 // Initialize Mermaid
@@ -664,7 +664,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isVoiceOutputEnabled, setIsVoiceOutputEnabled] = useState(true);
+  const [isVoiceOutputEnabled, setIsVoiceOutputEnabled] = useState(false);
   const [showBootSequence, setShowBootSequence] = useState(false);
   const [bootText, setBootText] = useState("");
   
@@ -965,23 +965,13 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
       setShowBootSequence(true);
       setBootText(bootPhrase);
       
-      // Immediate trigger for voice to ensure it starts with animation
-      const tVoice = setTimeout(() => {
-        generateVoice(bootPhrase, true, () => {
-          // Animation ends when voice ends
-          setShowBootSequence(false);
-          scrollToBottom('smooth');
-        }); 
-      }, 0);
-      
-      // Safety timeout in case audio fails to trigger onEnded
+      // Safety timeout to hide boot sequence
       const tSafety = setTimeout(() => {
          setShowBootSequence(false);
          scrollToBottom('smooth');
-      }, 8000);
+      }, 2800);
 
       return () => { 
-        clearTimeout(tVoice);
         clearTimeout(tSafety);
         stopCurrentAudio();
       };
@@ -1100,9 +1090,9 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
       setIsAnalyzing(false);
       playAnswerSound();
 
-      // Trigger voice after response
-      if (isVoiceOutputEnabled) {
-        generateVoice(fullContent.replace(/\[YT_SEARCH:.*?\]/gs, ''), isConversationMode);
+      // Voice only auto-plays in conversation mode (or when explicitly enabled by user)
+      if (isConversationMode || isVoiceOutputEnabled) {
+        generateVoice(fullContent.replace(/\[YT_SEARCH:.*?\]/gs, ''), false);
       }
 
       let videoTopic = '';
@@ -1409,7 +1399,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                       </div>
                     </motion.div>
                   ) : (
-                    <div className="space-y-12 pb-24">
+                    <div className="space-y-12 pb-40">
                       {messages.map((m, idx) => (
                         <motion.div 
                           key={m.id}
@@ -1477,8 +1467,8 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
 
 
               {/* Input Area - Minimal Gemini Style */}
-              <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 pt-4 relative"
-                style={{ paddingBottom: 'max(24px, calc(8px + env(safe-area-inset-bottom)))' }}
+              <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 pt-3 flex-shrink-0"
+                style={{ paddingBottom: 'max(20px, calc(12px + env(safe-area-inset-bottom)))' }}
               >
                 <form 
                   onSubmit={(e) => { e.preventDefault(); handleSend(); }}
@@ -1830,10 +1820,17 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                 <X className="w-6 h-6" />
               </button>
 
-              {/* Gemini-style Astra Orb */}
-              <div className="relative flex items-center justify-center w-full max-w-4xl h-[500px]">
+              {/* Gemini-style Astra Orb with Glow Ring */}
+              <div className="relative flex items-center justify-center w-full max-w-4xl h-[440px]">
+                {/* Background glow ring */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <GeminiGlow
+                    state={isAstraSpeaking ? 'speaking' : isAnalyzing ? 'thinking' : isListening ? 'listening' : 'idle'}
+                    size={480}
+                  />
+                </div>
                 <AstraOrb
-                  size={420}
+                  size={320}
                   analyserRef={analyserRef}
                   state={
                     (isAstraSpeaking
@@ -1847,115 +1844,102 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                 />
               </div>
 
-              <div className="mt-12 text-center max-w-2xl px-8">
+              {/* Gemini waveform — glows during active states */}
+              <div className="w-full max-w-lg mx-auto px-8 -mt-4">
+                <GeminiWave
+                  state={isAstraSpeaking ? 'speaking' : isAnalyzing ? 'thinking' : isListening ? 'listening' : 'idle'}
+                  width={480}
+                  height={64}
+                />
+              </div>
+
+              {/* Status text */}
+              <div className="mt-6 text-center max-w-2xl px-8">
                 <AnimatePresence mode="wait">
                   {isAnalyzing ? (
                     <motion.div
                       key="analyzing"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 1.1 }}
-                      className="space-y-6"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-4"
                     >
-                      <h2 className="text-white font-[900] text-3xl tracking-[0.6em] uppercase italic opacity-80">Astra Initializing</h2>
-                      <div className="flex justify-center gap-3">
-                        {[0, 1, 2, 3].map(i => (
-                          <motion.div 
-                            key={i}
-                            animate={{ 
-                              opacity: [0.2, 1, 0.2], 
-                              scale: [1, 1.8, 1],
-                              backgroundColor: ["#3b82f6", "#ffffff", "#3b82f6"]
-                            }}
-                            transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.2 }}
-                            className="w-2 h-2 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)]"
-                          />
-                        ))}
-                      </div>
-                      <p className="text-blue-400/60 font-black text-[10px] uppercase tracking-[0.5em]">Synchronizing Teacher Neural Architecture</p>
+                      <h2 className="text-white font-[900] text-2xl tracking-[0.4em] uppercase opacity-70">Processing</h2>
+                      <p className="text-blue-400/50 font-black text-[10px] uppercase tracking-[0.5em]">{analysisPhase}</p>
                     </motion.div>
                   ) : isAstraSpeaking ? (
                     <motion.div
                       key="speaking"
-                      initial={{ opacity: 0, y: 30 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -30 }}
-                      className="space-y-8"
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-4"
                     >
-                      <h2 className="text-blue-500 font-bold text-xs tracking-[0.8em] uppercase opacity-40">Astra Transmitting</h2>
-                      <p className="text-white/95 text-3xl font-black tracking-tight leading-tight px-4 italic">
-                        {messages[messages.length - 1]?.content.replace(/[#*`]/g, '')}
+                      <p className="text-[10px] font-black tracking-[0.8em] uppercase text-blue-400/40">Astra Speaking</p>
+                      <p className="text-white/80 text-xl font-semibold tracking-tight leading-snug px-4 line-clamp-3">
+                        {messages[messages.length - 1]?.content.replace(/[#*`\[\]]/g, '').substring(0, 180)}
                       </p>
                     </motion.div>
                   ) : isListening ? (
                     <motion.div
                       key="listening"
-                      initial={{ opacity: 0, y: 30 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -30 }}
-                      className="space-y-8"
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-4"
                     >
-                      <h2 className="text-white font-bold text-xs tracking-[0.8em] uppercase opacity-20">Astra Listening</h2>
-                      <p className="text-blue-400 text-4xl font-black italic tracking-tight">
-                        {input ? `"${input}"` : !hasInteracted ? "Ask me anything, I'm ready." : "I'm listening..."}
+                      <p className="text-[10px] font-black tracking-[0.8em] uppercase text-white/20">Listening</p>
+                      <p className="text-blue-400 text-3xl font-black italic tracking-tight">
+                        {input ? `"${input}"` : "I'm listening..."}
                       </p>
                     </motion.div>
                   ) : (
                     <motion.div
                       key="idle"
-                      initial={{ opacity: 0, y: 30 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -30 }}
+                      exit={{ opacity: 0, y: -10 }}
                       className="space-y-6"
                     >
-                      {!hasInteracted ? (
-                        <button 
-                          onClick={() => {
-                            if (!audioContextRef.current) {
-                              audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-                            }
-                            recognitionRef.current?.start();
-                          }}
-                          className="group flex flex-col items-center"
+                      <button
+                        onClick={() => {
+                          if (!audioContextRef.current) {
+                            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+                          }
+                          if (audioContextRef.current?.state === 'suspended') audioContextRef.current.resume();
+                          recognitionRef.current?.start();
+                        }}
+                        className="group flex flex-col items-center gap-4"
+                      >
+                        <motion.div
+                          whileHover={{ scale: 1.08 }}
+                          whileTap={{ scale: 0.94 }}
+                          className="w-20 h-20 rounded-full border border-blue-500/30 bg-blue-600/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-all shadow-[0_0_40px_rgba(59,130,246,0.15)]"
                         >
-                          <div className="w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center mb-8 border border-blue-500/20 group-hover:bg-blue-500/20 transition-all shadow-[0_0_50px_rgba(59,130,246,0.1)]">
-                            <Mic className="w-10 h-10 text-white" />
-                          </div>
-                          <h2 className="text-white font-black text-4xl tracking-tighter uppercase">Tap to Speak</h2>
-                          <p className="text-slate-500 mt-4 text-lg font-medium opacity-60">Ready to start our session?</p>
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => {
-                            if (!audioContextRef.current) {
-                              audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-                            }
-                            recognitionRef.current?.start();
-                          }}
-                          className="group flex flex-col items-center opacity-40 hover:opacity-100 transition-opacity"
-                        >
-                           <Mic className="w-12 h-12 text-blue-400 mb-4" />
-                           <p className="text-blue-400 font-black uppercase tracking-[0.4em] text-[10px]">Resume Neural Link</p>
-                        </button>
-                      )}
+                          <Mic className="w-9 h-9 text-blue-400" />
+                        </motion.div>
+                        <p className="text-white/60 font-black uppercase tracking-[0.4em] text-[11px]">
+                          {!hasInteracted ? 'Tap to Speak' : 'Resume'}
+                        </p>
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
               {/* Status Footer */}
-              <div className="absolute bottom-12 flex items-center gap-12 text-slate-700 font-black tracking-widest uppercase text-[10px]">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${isAstraSpeaking ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,1)]' : 'bg-slate-800'}`} />
-                  OUTPUT CONDUIT
+              <div className="absolute bottom-8 flex items-center gap-8 sm:gap-12 text-slate-700 font-black tracking-widest uppercase text-[9px]">
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full transition-all ${isAstraSpeaking ? 'bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,1)]' : 'bg-slate-800'}`} />
+                  Output
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,1)]' : 'bg-slate-800'}`} />
-                  INPUT LATTICE
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full transition-all ${isListening ? 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,1)]' : 'bg-slate-800'}`} />
+                  Input
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${isAnalyzing ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,1)]' : 'bg-slate-800'}`} />
-                  NEURAL COMPUTE
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full transition-all ${isAnalyzing ? 'bg-white shadow-[0_0_6px_rgba(255,255,255,1)]' : 'bg-slate-800'}`} />
+                  Neural
                 </div>
               </div>
             </motion.div>
