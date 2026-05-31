@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Mic, Clock, Sparkles } from 'lucide-react';
 import { AstraOrb, GeminiWave, GeminiGlow } from './AstraOrb';
 import { useVoiceConversation } from '../hooks/useVoiceConversation';
+import { useUser } from '../context/UserContext';
 
 interface AstraVoiceProps {
   isOpen: boolean;
@@ -29,6 +30,8 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
     stopAll,
     sessionExpired,
   } = useVoiceConversation(isOpen);
+  const { studentProfile } = useUser();
+  const studentName = studentProfile?.studentName?.trim();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -62,10 +65,10 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
     : isThinking
     ? 'Astra is building your response with deep contextual focus.'
     : isSpeaking
-    ? lastAssistant || 'Astra is speaking — stay tuned.'
+    ? 'Astra is speaking — delivering your answer now.'
     : isListening
-    ? liveTranscript || 'Speak naturally into your phone. Astra hears interruptions instantly.'
-    : 'Tap the mic or simply speak to begin. Interrupt Astra anytime.';
+    ? 'Speak clearly. Astra is capturing your words and will respond immediately.'
+    : 'Tap the mic or say anything to begin. Astra can be interrupted while she speaks.';
 
   if (!isOpen) return null;
 
@@ -109,18 +112,23 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Header */}
-        <div className="relative z-10 flex items-center justify-between px-2 sm:px-4 py-3 flex-shrink-0">
-          <div className="flex flex-col gap-1">
+        <div className="relative z-10 flex flex-col gap-3 px-2 sm:px-4 py-3 flex-shrink-0 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
               <span className="text-[10px] font-black uppercase tracking-[0.35em] text-white/50">Voice Link Active</span>
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-mono">
-              <Clock className="w-3 h-3 text-cyan-400" />
+            <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono text-cyan-400">
+              <Clock className="w-3 h-3" />
               <span className={timeLeft < 120 ? 'text-red-400' : 'text-cyan-400'}>
                 {formatTime(timeLeft)} · Free 30 min session
               </span>
+              <span className="text-white/40">|</span>
+              <span className="text-white/70">Founded by SAHIL KARNA</span>
             </div>
+            <p className="text-[11px] text-slate-400 max-w-xl">
+              {studentName ? `Astra is your premium voice mentor, tailored for ${studentName}.` : 'Astra is your premium voice mentor. Emotionally intelligent, founder-crafted, and ready to help.'}
+            </p>
           </div>
           <button
             onClick={handleClose}

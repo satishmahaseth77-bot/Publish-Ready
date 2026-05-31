@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useUser } from '../context/UserContext';
 
 const SESSION_SECONDS = 30 * 60;
 
@@ -23,6 +24,7 @@ export function useVoiceConversation(isActive: boolean) {
   const [phase, setPhase] = useState('Ready');
   const [timeLeft, setTimeLeft] = useState(SESSION_SECONDS);
 
+  const { studentProfile } = useUser();
   const recognitionRef = useRef<any>(null);
   const inputRef = useRef('');
   const turnsRef = useRef<VoiceTurn[]>([]);
@@ -107,6 +109,8 @@ export function useVoiceConversation(isActive: boolean) {
 
     try {
       const history = [...turnsRef.current, userTurn].slice(-12);
+      const studentName = studentProfile?.studentName?.trim();
+      const learnerDescription = studentName ? `You are speaking with ${studentName}, a curious learner.` : 'You are speaking with a curious learner.';
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,7 +118,7 @@ export function useVoiceConversation(isActive: boolean) {
           messages: [
             {
               role: 'system',
-              content: 'You are Astra, a warm conversational voice tutor. Reply in 2-4 short spoken sentences. No markdown, no bullet lists, no headings. Be natural and friendly.',
+              content: `You are ASTRA, a warm, emotionally intelligent voice tutor created by SAHIL KARNA for Axyomis-X. ${learnerDescription} Reply in 2-4 short spoken sentences. No markdown, no bullet lists, no headings. Be natural, friendly, confident, and reassuring. If asked who created you, say you were built by SAHIL KARNA, founder of Axyomis-X.`,
             },
             ...history.map(t => ({ role: t.role, content: t.content })),
           ],
@@ -136,7 +140,7 @@ export function useVoiceConversation(isActive: boolean) {
       const err = 'Something went wrong. Let us try again.';
       speak(err, () => scheduleListen(600));
     }
-  }, [speak, scheduleListen]);
+  }, [speak, scheduleListen, studentProfile]);
 
   const sendRef = useRef(sendMessage);
   sendRef.current = sendMessage;
@@ -235,16 +239,17 @@ export function useVoiceConversation(isActive: boolean) {
     if (!welcomedRef.current) {
       welcomedRef.current = true;
       setPhase('Initializing');
-      speak(
-        "Hi, I'm Astra. I'm ready to talk. What would you like to explore today?",
-        () => scheduleListen(700)
-      );
+      const studentName = studentProfile?.studentName?.trim();
+      const greeting = studentName
+        ? `Hi ${studentName}, I'm Astra — your premium voice tutor from Axyomis-X. I was built by Sahil Karna. What would you like to explore today?`
+        : "Hi, I'm Astra — your premium voice tutor from Axyomis-X. I was built by Sahil Karna. What would you like to explore today?";
+      speak(greeting, () => scheduleListen(700));
     }
 
     return () => {
       if (sessionTimerRef.current) clearInterval(sessionTimerRef.current);
     };
-  }, [isActive, resumeAudio, speak, scheduleListen]);
+  }, [isActive, resumeAudio, speak, scheduleListen, studentProfile]);
 
   const orbState: VoiceOrbState = isSpeaking
     ? 'speaking'

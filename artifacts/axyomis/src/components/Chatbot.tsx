@@ -602,7 +602,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
       setIsConversationMode(true);
       setConversationTimeLeft(30 * 60);
       generateVoiceRef.current(
-        "Hi! I'm Astra. I'm ready for a voice conversation. Just speak when you're ready.",
+        "Hi, I'm Astra — your premium voice tutor built by SAHIL KARNA for Axyomis-X. I'm ready for a voice conversation. Just speak when you're ready.",
         false,
         () => scheduleConversationListeningRef.current(600)
       );
@@ -1651,7 +1651,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                 </form>
                 <div className="text-center mt-4">
                   <p className="text-[10px] text-slate-700 font-[900] uppercase tracking-[0.3em] opacity-40">
-                    Astra AI Assistant v3.0 | Online
+                    Astra AI Assistant v3.0 | Founded by SAHIL KARNA | Online
                   </p>
                 </div>
               </div>
