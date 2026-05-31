@@ -11,11 +11,11 @@
     { "source": "/api/send-report", "destination": "/api/send-report.js" },
     { "source": "/api/healthz", "destination": "/api/healthz.js" },
     { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/((?!api/|assets/|_next/|.*\\..*).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
-      "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))",
+      "source": "/assets/:path*",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
