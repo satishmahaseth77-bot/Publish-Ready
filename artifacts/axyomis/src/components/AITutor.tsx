@@ -101,7 +101,7 @@ interface AITutorProps {
   initialMode?: 'doubts' | 'lesson';
 }
 
-export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, onOpenReader }) => {
+export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, onOpenReader, initialMode }) => {
   const { classLevel, subjects, isPremium, isTrialActive, uid, studentProfile } = useUser() as any;
   const canAccessPremium = isPremium || isTrialActive;
   const [selectedSubject, setSelectedSubject] = useState<string>('');

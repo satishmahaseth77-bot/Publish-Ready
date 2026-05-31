@@ -91,6 +91,7 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
 
   const palette = STATE_PALETTE[state];
   const conic = `conic-gradient(from 140deg, ${palette.join(', ')})`;
+  const nebula = `radial-gradient(circle at 18% 24%, rgba(255,255,255,0.28), transparent 16%), radial-gradient(circle at 72% 38%, ${palette[2]}22, transparent 22%), radial-gradient(circle at 48% 72%, ${palette[3]}16, transparent 18%)`;
   const mesh = `radial-gradient(circle at 20% 20%, rgba(255,255,255,0.92), transparent 18%), radial-gradient(circle at 70% 30%, rgba(255,255,255,0.18), transparent 24%), linear-gradient(135deg, rgba(34,211,238,0.22), rgba(168,85,247,0.18) 35%, rgba(236,72,153,0.12))`;
   const ringSpeed = state === 'thinking' ? 4 : state === 'speaking' ? 6 : 18;
   const innerSpeed = state === 'thinking' ? 6 : state === 'speaking' ? 8 : 22;
@@ -108,6 +109,7 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
         }}
       />
 
+      <div className="astra-orb-nebula" style={{ background: nebula }} />
       <div className="astra-orb-grid" />
 
       {isActive && [0, 1, 2].map((index) => (
@@ -118,6 +120,16 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
           transition={{ duration: 2.6 + index * 0.45, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut', delay: index * 0.15 }}
           className="astra-orb-listen-ring"
           style={{ borderColor: `rgba(34, 211, 238, ${0.14 - index * 0.03})` }}
+        />
+      ))}
+
+      {[0, 1].map((idx) => (
+        <motion.div
+          key={`astro-arc-${idx}`}
+          animate={prefersReducedMotion ? undefined : { rotate: idx % 2 ? 360 : -360 }}
+          transition={{ duration: 20 + idx * 6, repeat: Infinity, ease: 'linear' }}
+          className={`astra-orb-arc astra-orb-arc-${idx}`}
+          style={{ borderColor: `rgba(255,255,255,${0.16 - idx * 0.04})` }}
         />
       ))}
 

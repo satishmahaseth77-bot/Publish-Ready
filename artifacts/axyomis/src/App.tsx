@@ -147,6 +147,16 @@ export default function App() {
     setIsAstraVoiceOpen(true);
   }, []);
 
+  const terminateSession = useCallback(() => {
+    setIsChatOpen(false);
+    setIsAstraVoiceOpen(false);
+    setIsAITutorOpen(false);
+    setReaderOpen(false);
+    if (typeof window !== 'undefined') {
+      window.speechSynthesis?.cancel();
+    }
+  }, []);
+
   const openProfile = useCallback(() => {
     setIsProfileOpen(true);
   }, []);
@@ -333,16 +343,10 @@ export default function App() {
                     <span>Doubt Solver</span>
                   </button>
                   <button
-                    onClick={() => {
-                      setIsChatOpen(false);
-                      setIsAstraVoiceOpen(false);
-                      setIsAITutorOpen(false);
-                      setReaderOpen(false);
-                      window.speechSynthesis?.cancel();
-                    }}
-                    className="ambient-glow flex items-center gap-3 px-8 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-red-500/15 transition-all shadow-[0_0_30px_rgba(239,68,68,0.18)]"
+                    onClick={terminateSession}
+                    className="astro-terminate-btn flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white transition-all"
                   >
-                    <X className="w-4 h-4 text-red-300" />
+                    <X className="w-4 h-4 text-white" />
                     <span>Terminate</span>
                   </button>
                   <div className="flex -space-x-3">

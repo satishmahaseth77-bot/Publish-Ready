@@ -131,7 +131,7 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={handleClose}
-            className="touch-target inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/20 transition-all"
+            className="astro-terminate-btn touch-target inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-white transition-all"
             aria-label="Terminate voice session and close Astra Voice"
           >
             <X className="w-4 h-4" />

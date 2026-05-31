@@ -187,6 +187,39 @@
   filter: blur(1px);
 }
 
+.astra-orb-nebula {
+  position: absolute;
+  inset: 12%;
+  border-radius: 999px;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  filter: blur(6px);
+}
+
+.astra-orb-arc {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 1px dashed rgba(255,255,255,0.14);
+  box-shadow: 0 0 30px rgba(255,255,255,0.08);
+  pointer-events: none;
+}
+
+.astra-orb-arc-0 {
+  width: 108%;
+  height: 108%;
+}
+
+.astra-orb-arc-1 {
+  width: 124%;
+  height: 124%;
+  border-style: solid;
+  opacity: 0.55;
+}
+
 .astra-orb-listen-ring {
   position: absolute;
   inset: 0;
@@ -245,7 +278,46 @@
 .rainbow-btn::before { content: ''; position: absolute; inset: -2px; z-index: -2; background: linear-gradient(90deg, #06b6d4, #0891b2, #0e7490, #155e75, #0ea5e9, #0284c7, #0369a1, #075985, #06b6d4); background-size: 200% 100%; animation: rainbowScroll 4s linear infinite; border-radius: inherit; }
 .rainbow-btn::after { content: ''; position: absolute; inset: 2px; z-index: -1; background: rgba(5, 7, 10, 0.95); border-radius: inherit; transition: background 0.3s ease; }
 .rainbow-btn span { position: relative; z-index: 2; }
-@keyframes rainbowScroll { 0% { background-position: 0% 0; } 100% { background-position: 200% 0; } }
+
+.astro-terminate-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 15px 34px;
+  border-radius: 28px;
+  background: rgba(5, 7, 10, 0.82);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.12);
+  overflow: hidden;
+  cursor: pointer;
+}
+.astro-terminate-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: -2;
+  background: linear-gradient(90deg, #0ea5e9, #8b5cf6, #f472b6, #fb7185, #22d3ee, #0ea5e9);
+  background-size: 180% 100%;
+  animation: rainbowScroll 3.5s linear infinite;
+  border-radius: inherit;
+}
+.astro-terminate-btn::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  background: rgba(5, 7, 10, 0.9);
+  border-radius: inherit;
+  transition: background 0.25s ease;
+}
+.astro-terminate-btn:hover::after {
+  background: rgba(10, 14, 24, 0.85);
+}
+
+@keyframes rainbowScroll { 0% { background-position: 0% 0; } 100% { background-position: 180% 0; } }
 
 nav { 
   position:fixed; top:0; width:100%; z-index:1000; padding:1.2rem 3rem; display:flex; align-items:center; justify-content:space-between; 
@@ -538,11 +610,11 @@ nav {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(66,133,244,0.35), rgba(155,114,203,0.35), rgba(236,72,153,0.25));
+  background: linear-gradient(135deg, rgba(66,133,244,0.35), rgba(155,114,203,0.35), rgba(236,72,153,0.25), rgba(16,185,129,0.22));
   filter: blur(12px);
-  opacity: 0.45;
+  opacity: 0.55;
   z-index: -1;
-  animation: glowShift 8s ease-in-out infinite alternate;
+  animation: glowShift 7s ease-in-out infinite alternate;
 }
 @keyframes glowShift {
   0% { opacity: 0.3; transform: scale(0.98); }
