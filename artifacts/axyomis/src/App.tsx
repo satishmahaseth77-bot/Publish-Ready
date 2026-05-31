@@ -9,7 +9,8 @@ import { QuizSection } from './components/QuizSection';
 import { GlobalPopups } from './components/Popups';
 import { Profile } from './components/Profile';
 import { PremiumSection } from './components/PremiumSection';
-import { CoursesSection } from './components/CoursesSection';
+import { AstraVoice } from './components/AstraVoice';
+import { MobileNav } from './components/MobileNav';
 import { AITutor } from './components/AITutor';
 import { StudyPlan } from './components/StudyPlan';
 import { StudyAnalytics } from './components/StudyAnalytics';
@@ -31,7 +32,7 @@ import { load3D as engineLoad3D } from './engine3d';
 
 export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [talkModeEnabled, setTalkModeEnabled] = useState(false);
+  const [isAstraVoiceOpen, setIsAstraVoiceOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [isAITutorOpen, setIsAITutorOpen] = useState(false);
@@ -108,23 +109,42 @@ export default function App() {
   }, [uid, hasCompletedOnboarding]);
 
   const handleChatStateChange = useCallback((open: boolean) => {
+    if (open) {
+      setIsAstraVoiceOpen(false);
+      setIsAITutorOpen(false);
+    }
     setIsChatOpen(open);
-    if (!open) setTalkModeEnabled(false);
   }, []);
 
   const openAITutor = useCallback(() => {
     setIsChatOpen(false);
-    setTalkModeEnabled(false);
+    setIsAstraVoiceOpen(false);
+    setReaderOpen(false);
     setIsAITutorOpen(true);
   }, []);
 
-  const openChat = useCallback((conversation = false) => {
+  const openChat = useCallback(() => {
     setIsAITutorOpen(false);
-    setTalkModeEnabled(conversation);
+    setIsAstraVoiceOpen(false);
+    setReaderOpen(false);
     setIsChatOpen(true);
   }, []);
 
+  const openAstraVoice = useCallback(() => {
+    setIsChatOpen(false);
+    setIsAITutorOpen(false);
+    setReaderOpen(false);
+    setIsAstraVoiceOpen(true);
+  }, []);
+
+  const openProfile = useCallback(() => {
+    setIsProfileOpen(true);
+  }, []);
+
   const openReader = useCallback((topic: string, context = '') => {
+    setIsChatOpen(false);
+    setIsAstraVoiceOpen(false);
+    setIsAITutorOpen(false);
     setReaderTopic(topic);
     setReaderContext(context);
     setReaderOpen(true);
@@ -199,7 +219,7 @@ export default function App() {
             <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono">Biomedical OS / Release Candidate 1.0.4</p>
           </div>
         </a>
-        <div className="nav-links">
+        <div className="nav-links hidden md:flex items-center">
           <a href="#evaluation-quiz">QUIZ</a>
           <a href="#cosmos-section">Cosmos</a>
           <a href="#anatomy-section">Anatomy</a>
@@ -224,8 +244,8 @@ export default function App() {
             Info
           </button>
           <button 
-            onClick={() => setIsProfileOpen(true)}
-            className="flex items-center gap-2 p-2 px-4 rounded-full bg-white/5 border border-white/10 hover:border-blue-500/50 transition-all group"
+            onClick={openProfile}
+            className="flex items-center gap-2 p-2 px-4 rounded-full bg-white/5 border border-white/10 hover:border-blue-500/50 transition-all group touch-target"
           >
             <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-800 border border-white/10 group-hover:border-blue-500/50">
               {currentUser?.photoURL ? (
@@ -239,6 +259,18 @@ export default function App() {
             </span>
           </button>
         </div>
+        <MobileNav
+          onOpenTutor={openAITutor}
+          onOpenVoice={openAstraVoice}
+          onOpenProfile={openProfile}
+          onOpenInfo={() => {
+            setIsMatrixOpen(true);
+            voiceService.speak('Initializing neural matrix synchronization protocol.');
+          }}
+          displayName={currentUser?.displayName}
+          photoURL={currentUser?.photoURL}
+          isPremium={isPremium}
+        />
       </nav>
 
       <main id="app" className="pt-32">
@@ -277,8 +309,8 @@ export default function App() {
                 </div>
                 <div className="mt-8 flex flex-wrap gap-4 items-center justify-center sm:justify-start">
                   <button 
-                    onClick={() => openChat(true)}
-                    className="flex items-center gap-3 px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/10 hover:border-blue-500/50 transition-all shadow-xl group"
+                    onClick={openAstraVoice}
+                    className="ambient-glow flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600/25 to-violet-600/25 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:from-blue-600/35 hover:to-violet-600/35 transition-all shadow-[0_0_40px_rgba(59,130,246,0.2)] group touch-target"
                   >
                     <Volume2 className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
                     <span>Talk with Astra</span>
@@ -613,8 +645,8 @@ export default function App() {
       {/* PARENT REPORT SECTION */}
       <ParentReport />
 
-      {/* CORE COURSES */}
-      <CoursesSection onOpenChapter={(topic, subject) => openReader(topic, subject)} />
+      {/* CORE COURSES — integrated in AI Tutor; anchor kept for links */}
+      <div id="courses" className="hidden" aria-hidden />
 
       {/* PREMIUM SECTION */}
       <PremiumSection />
@@ -713,15 +745,21 @@ export default function App() {
         </div>
       </footer>
       <GlobalPopups isChatOpen={isChatOpen} isTutorOpen={isAITutorOpen} />
+      <AstraVoice isOpen={isAstraVoiceOpen} onClose={() => setIsAstraVoiceOpen(false)} />
       <Chatbot 
         onStateChange={handleChatStateChange} 
         externalOpen={isChatOpen}
-        startInConversationMode={talkModeEnabled}
-        hideToggle={isAITutorOpen}
+        hideToggle={isAITutorOpen || isAstraVoiceOpen}
         onOpenAITutor={openAITutor}
+        onOpenVoice={openAstraVoice}
       />
       <Profile isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
-      <AITutor isOpen={isAITutorOpen} onClose={() => setIsAITutorOpen(false)} onOpenChat={() => openChat(false)} />
+      <AITutor
+        isOpen={isAITutorOpen}
+        onClose={() => setIsAITutorOpen(false)}
+        onOpenChat={openChat}
+        onOpenReader={openReader}
+      />
       <OnboardingFlow isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
       <OriginDialog 
         isOpen={isMatrixOpen} 

@@ -574,11 +574,11 @@ interface ChatbotProps {
   onStateChange?: (isOpen: boolean) => void;
   externalOpen?: boolean;
   hideToggle?: boolean;
-  startInConversationMode?: boolean;
   onOpenAITutor?: () => void;
+  onOpenVoice?: () => void;
 }
 
-export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, startInConversationMode, hideToggle, onOpenAITutor }) => {
+export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, hideToggle, onOpenAITutor, onOpenVoice }) => {
   const { effectiveTier } = useUser();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -659,10 +659,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
     if (externalOpen !== undefined && externalOpen !== isOpen) {
       setIsOpen(externalOpen);
     }
-    if (externalOpen && startInConversationMode) {
-      toggleConversationMode(true);
-    }
-  }, [externalOpen, startInConversationMode]);
+  }, [externalOpen]);
 
   useEffect(() => {
     if (!externalOpen && isConversationMode) {
@@ -1287,7 +1284,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
             initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
             animate={{ opacity: 1, backdropFilter: "blur(40px)" }}
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-            className="fixed inset-0 z-[400] bg-black/60 flex flex-col md:flex-row overflow-hidden font-sans selection:bg-blue-500/20 h-[100dvh]"
+            className="fixed inset-0 z-[420] bg-black/60 flex flex-col md:flex-row overflow-hidden font-sans selection:bg-blue-500/20 h-[100dvh]"
           >
             {/* Mobile sidebar backdrop */}
             {isSidebarOpen && (
@@ -1483,7 +1480,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                 </div>
               </div>
 
-              // Interaction View - Gemini Style Centered
+              {/* Interaction View — centered chat */}
               <div className="flex-1 w-full flex flex-col items-center overflow-y-auto scrollbar-none px-6 py-12 h-0 relative scroll-smooth" id="chat-scroll-container">
                 <div className="w-full max-w-3xl space-y-12">
                   {messages.length === 0 ? (
@@ -1626,30 +1623,17 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                         whileTap={{ scale: 0.95 }}
                         type="button" 
                         onClick={() => {
-                          if (isConversationMode) {
-                            toggleConversationMode(false);
-                          } else {
-                            toggleConversationMode(true);
+                          if (onOpenVoice) {
+                            setIsOpen(false);
+                            onStateChangeRef.current?.(false);
+                            onOpenVoice();
                           }
                         }}
-                        className={`p-3.5 rounded-2xl border transition-all shadow-xl relative group/mic ${isConversationMode ? 'text-green-400 bg-green-500/10 border-green-500/30 ring-2 ring-green-500/20' : 'text-blue-400 bg-blue-500/5 border-blue-500/10'}`}
-                        title="Neural Voice Link"
+                        className="p-3.5 rounded-2xl border transition-all shadow-xl relative group/mic text-blue-400 bg-blue-500/5 border-blue-500/10 hover:bg-blue-500/15"
+                        title="Open Talk with Astra (Voice)"
                       >
-                        <div className={`absolute inset-0 blur-xl opacity-0 group-hover/mic:opacity-100 transition-opacity ${isConversationMode ? 'bg-green-500/20' : 'bg-blue-500/10'}`} />
-                        {isAstraSpeaking ? (
-                           <motion.div 
-                             animate={{ rotate: 360 }}
-                             transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                             className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full"
-                           />
-                        ) : (
-                          <Volume2 className="w-6 h-6 relative z-10" />
-                        )}
-                        <motion.div 
-                          animate={isConversationMode ? { scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] } : {}}
-                          transition={{ repeat: Infinity, duration: 2 }}
-                          className={`absolute inset-0 border rounded-2xl ${isConversationMode ? 'border-green-400/20' : 'border-blue-400/20'}`}
-                        />
+                        <div className="absolute inset-0 blur-xl opacity-0 group-hover/mic:opacity-100 transition-opacity bg-blue-500/10" />
+                        <Volume2 className="w-6 h-6 relative z-10" />
                       </motion.button>
                       <button 
                         type="submit"
@@ -1703,21 +1687,23 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                 <div className="flex-1 overflow-y-auto p-10 scrollbar-none space-y-12">
                   {/* Neural Interaction Mode */}
                   <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-4">
                       <div>
-                        <h4 className="text-white font-black tracking-widest uppercase text-sm mb-1">Conversation Mode</h4>
+                        <h4 className="text-white font-black tracking-widest uppercase text-sm mb-1">Talk with Astra</h4>
                         <p className="text-[10px] text-slate-500 uppercase tracking-widest leading-relaxed">
-                          Enables a casual, motivating, and interactive Astra persona.
+                          Full-screen voice mode with Gemini-style visuals — free 30 min sessions.
                         </p>
                       </div>
                       <button 
-                        onClick={() => toggleConversationMode(!isConversationMode)}
-                        className={`w-14 h-7 rounded-full p-1 transition-all duration-300 ${isConversationMode ? 'bg-blue-600' : 'bg-white/10'}`}
+                        onClick={() => {
+                          setIsSettingsOpen(false);
+                          setIsOpen(false);
+                          onStateChangeRef.current?.(false);
+                          onOpenVoice?.();
+                        }}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 text-white text-[10px] font-black uppercase tracking-widest shrink-0"
                       >
-                        <motion.div 
-                          animate={{ x: isConversationMode ? 28 : 0 }}
-                          className="w-5 h-5 bg-white rounded-full shadow-lg"
-                        />
+                        Open Voice
                       </button>
                     </div>
                   </div>
@@ -1912,165 +1898,6 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
           )}
         </AnimatePresence>
 
-        {/* Conversation Mode Overlay */}
-        <AnimatePresence>
-          {isConversationMode && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[300] bg-black flex flex-col items-center justify-center overflow-hidden"
-              style={{ padding: 'max(48px, env(safe-area-inset-top)) max(48px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom)) max(48px, env(safe-area-inset-left))' }}
-            >
-              <div className="absolute left-8 sm:left-12" style={{ top: 'max(48px, env(safe-area-inset-top))' }}>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-4">
-                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                    <span className="text-white font-black tracking-[0.3em] uppercase text-xs opacity-50">Neural Link Active</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <History className="w-3 h-3 text-blue-500" />
-                    <span className={`font-mono text-xs tracking-widest ${conversationTimeLeft < 60 ? 'text-red-500 animate-pulse' : 'text-blue-400'}`}>
-                      REMAINING: {formatTime(conversationTimeLeft)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <button 
-                onClick={() => toggleConversationMode(false)}
-                className="absolute right-8 sm:right-12 p-4 min-w-[44px] min-h-[44px] bg-white/5 active:bg-white/20 hover:bg-white/10 rounded-full text-white transition-all hover:rotate-90"
-                style={{ top: 'max(48px, env(safe-area-inset-top))' }}
-              >
-                <X className="w-6 h-6" />
-              </button>
-
-              {/* Gemini-style Astra Orb with Glow Ring */}
-              <div className="relative flex items-center justify-center w-full max-w-4xl h-[440px]">
-                {/* Background glow ring */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <GeminiGlow
-                    state={isAstraSpeaking ? 'speaking' : isAnalyzing ? 'thinking' : isListening ? 'listening' : 'idle'}
-                    size={480}
-                  />
-                </div>
-                <AstraOrb
-                  size={320}
-                  analyserRef={analyserRef}
-                  state={
-                    (isAstraSpeaking
-                      ? 'speaking'
-                      : isAnalyzing
-                      ? 'thinking'
-                      : isListening
-                      ? 'listening'
-                      : 'idle') as OrbState
-                  }
-                />
-              </div>
-
-              {/* Gemini waveform — glows during active states */}
-              <div className="w-full max-w-lg mx-auto px-8 -mt-4">
-                <GeminiWave
-                  state={isAstraSpeaking ? 'speaking' : isAnalyzing ? 'thinking' : isListening ? 'listening' : 'idle'}
-                  width={480}
-                  height={64}
-                />
-              </div>
-
-              {/* Status text */}
-              <div className="mt-6 text-center max-w-2xl px-8">
-                <AnimatePresence mode="wait">
-                  {isAnalyzing ? (
-                    <motion.div
-                      key="analyzing"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="space-y-4"
-                    >
-                      <h2 className="text-white font-[900] text-2xl tracking-[0.4em] uppercase opacity-70">Processing</h2>
-                      <p className="text-blue-400/50 font-black text-[10px] uppercase tracking-[0.5em]">{analysisPhase}</p>
-                    </motion.div>
-                  ) : isAstraSpeaking ? (
-                    <motion.div
-                      key="speaking"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="space-y-4"
-                    >
-                      <p className="text-[10px] font-black tracking-[0.8em] uppercase text-blue-400/40">Astra Speaking</p>
-                      <p className="text-white/80 text-xl font-semibold tracking-tight leading-snug px-4 line-clamp-3">
-                        {messages[messages.length - 1]?.content.replace(/[#*`\[\]]/g, '').substring(0, 180)}
-                      </p>
-                    </motion.div>
-                  ) : isListening ? (
-                    <motion.div
-                      key="listening"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="space-y-4"
-                    >
-                      <p className="text-[10px] font-black tracking-[0.8em] uppercase text-white/20">Listening</p>
-                      <p className="text-blue-400 text-3xl font-black italic tracking-tight">
-                        {input ? `"${input}"` : "I'm listening..."}
-                      </p>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="idle"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="space-y-6"
-                    >
-                      <button
-                        onClick={() => {
-                          if (!audioContextRef.current) {
-                            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-                          }
-                          if (audioContextRef.current?.state === 'suspended') audioContextRef.current.resume();
-                          recognitionRef.current?.start();
-                        }}
-                        className="group flex flex-col items-center gap-4"
-                      >
-                        <motion.div
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.94 }}
-                          className="w-20 h-20 rounded-full border border-blue-500/30 bg-blue-600/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-all shadow-[0_0_40px_rgba(59,130,246,0.15)]"
-                        >
-                          <Mic className="w-9 h-9 text-blue-400" />
-                        </motion.div>
-                        <p className="text-white/60 font-black uppercase tracking-[0.4em] text-[11px]">
-                          {!hasInteracted ? 'Tap to Speak' : 'Resume'}
-                        </p>
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Status Footer */}
-              <div className="absolute bottom-8 flex items-center gap-8 sm:gap-12 text-slate-700 font-black tracking-widest uppercase text-[9px]">
-                <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full transition-all ${isAstraSpeaking ? 'bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,1)]' : 'bg-slate-800'}`} />
-                  Output
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full transition-all ${isListening ? 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,1)]' : 'bg-slate-800'}`} />
-                  Input
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full transition-all ${isAnalyzing ? 'bg-white shadow-[0_0_6px_rgba(255,255,255,1)]' : 'bg-slate-800'}`} />
-                  Neural
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
       <motion.button
         whileHover={{ scale: 1.1, rotate: 8 }}
         whileTap={{ scale: 0.9 }}
@@ -2089,7 +1916,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
           onStateChangeRef.current?.(next);
         }}
         style={{ display: hideToggle ? 'none' : undefined, bottom: 'max(40px, calc(16px + env(safe-area-inset-bottom)))', right: 'max(40px, env(safe-area-inset-right))' }}
-        className="fixed z-[140] w-20 h-20 sm:w-24 sm:h-24 rounded-[36px] sm:rounded-[40px] bg-black border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,1)] flex items-center justify-center transition-all group overflow-hidden"
+        className="fixed z-[350] w-16 h-16 sm:w-20 sm:h-20 rounded-[28px] sm:rounded-[36px] bg-black border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,1)] flex items-center justify-center transition-all group overflow-hidden"
         id="toggle-astra"
       >
         <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/20 transition-all opacity-0 group-hover:opacity-100 duration-500" />

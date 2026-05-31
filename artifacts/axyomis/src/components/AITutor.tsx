@@ -16,6 +16,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { DoubtsSection } from './DoubtsSection';
+import { CORE_COURSES, getCourseUnits, type CoreSubject } from '../data/curriculum';
 
 type Tab = 'lesson' | 'videos' | 'summary' | 'quiz' | 'doubts';
 
@@ -96,9 +97,10 @@ interface AITutorProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenChat?: () => void;
+  onOpenReader?: (topic: string, subject: string) => void;
 }
 
-export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat }) => {
+export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, onOpenReader }) => {
   const { classLevel, subjects, isPremium, isTrialActive, uid, studentProfile } = useUser() as any;
   const canAccessPremium = isPremium || isTrialActive;
   const [selectedSubject, setSelectedSubject] = useState<string>('');
@@ -152,7 +154,12 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat })
     }).catch(() => {});
   }, [isOpen, selectedSubject, effectiveClass]);
 
-  const chapters = CHAPTERS_BY_SUBJECT[selectedSubject] || [];
+  const coreSubjects = CORE_COURSES.map(c => c.subject);
+  const allSubjects = [...new Set([...effectiveSubjects, ...coreSubjects])];
+  const isCoreSubject = coreSubjects.includes(selectedSubject as CoreSubject);
+  const chapters = isCoreSubject
+    ? getCourseUnits(selectedSubject as CoreSubject, effectiveClass).flatMap(u => u.topics)
+    : (CHAPTERS_BY_SUBJECT[selectedSubject] || []);
   const chapterOfDay = selectedSubject ? getChapterOfDay(selectedSubject) : '';
 
   const loadChapter = useCallback(async (chapter: string) => {
@@ -220,7 +227,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat })
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[450] flex pointer-events-auto">
+      <div className="fixed inset-0 z-[460] flex pointer-events-auto">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -323,13 +330,16 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat })
                   <div className="p-3 border-b border-white/5">
                     <p className="text-[8px] font-black uppercase tracking-widest text-cyan-500/40 mb-2 px-1">Subject</p>
                     <div className="space-y-0.5">
-                      {effectiveSubjects.map((s: string) => (
+                      {allSubjects.map((s: string) => (
                         <button
                           key={s}
                           onClick={() => { setSelectedSubject(s); setSelectedChapter(''); setLessonContent(''); }}
                           className={`w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${selectedSubject === s ? 'bg-cyan-500/15 border border-cyan-500/25 text-cyan-300' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
                         >
                           {s}
+                          {coreSubjects.includes(s as CoreSubject) && (
+                            <span className="ml-1 text-[8px] text-violet-400/70">★</span>
+                          )}
                         </button>
                       ))}
                     </div>
@@ -549,6 +559,15 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat })
                       <AnimatePresence mode="wait">
                         {activeTab === 'lesson' && lessonContent && (
                           <motion.div key="lesson" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                            {onOpenReader && (
+                              <button
+                                onClick={() => onOpenReader(selectedChapter, selectedSubject)}
+                                className="mb-6 w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600/20 to-cyan-600/20 border border-violet-500/30 text-violet-200 text-[10px] font-black uppercase tracking-widest hover:from-violet-600/30 hover:to-cyan-600/30 transition-all touch-target"
+                              >
+                                <BookOpen className="w-4 h-4" />
+                                Read Full Textbook Chapter
+                              </button>
+                            )}
                             <div className="prose prose-invert prose-sm max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:tracking-wider prose-headings:text-cyan-400 prose-strong:text-white prose-code:text-cyan-300 prose-code:bg-white/5 prose-code:rounded prose-code:px-1 prose-p:text-slate-300 prose-li:text-slate-300">
                               <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
                                 {lessonContent}

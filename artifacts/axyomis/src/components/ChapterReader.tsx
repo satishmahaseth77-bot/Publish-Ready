@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useId } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   BookOpen, X, ChevronLeft, ChevronRight, ExternalLink, Play,
@@ -16,19 +16,33 @@ import { loadChapter, type BookChapter } from '../services/chapterCache';
 
 mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
 
+let mermaidRenderCounter = 0;
+
 const MermaidDiagram: React.FC<{ chart: string }> = ({ chart }) => {
   const [svg, setSvg] = useState('');
-  const id = useId().replace(/:/g, '');
+  const [error, setError] = useState(false);
+  const renderId = useRef(`chapter-mmd-${++mermaidRenderCounter}`);
+
   useEffect(() => {
     if (!chart?.trim()) return;
     let code = chart.trim();
     if (!code.startsWith('graph') && !code.startsWith('flowchart')) code = 'flowchart TD\n' + code;
-    mermaid.render(`chapter-mermaid-${id}`, code).then(({ svg }) => setSvg(svg)).catch(() => setSvg(''));
-  }, [chart, id]);
-  if (!svg) return null;
+    setError(false);
+    mermaid.render(renderId.current, code)
+      .then(({ svg: rendered }) => setSvg(rendered))
+      .catch(() => {
+        const fixed = code.replace(/\("\s*([^"]+?)\s*"\)/g, '["$1"]');
+        mermaid.render(`${renderId.current}-retry`, fixed)
+          .then(({ svg: rendered }) => setSvg(rendered))
+          .catch(() => setError(true));
+      });
+  }, [chart]);
+
+  if (error) return null;
+  if (!svg) return <div className="my-8 h-32 rounded-3xl bg-white/5 animate-pulse border border-white/5" />;
   return (
-    <div className="my-10 p-8 bg-black/40 rounded-3xl border border-white/5 overflow-x-auto">
-      <div className="flex justify-center" dangerouslySetInnerHTML={{ __html: svg }} />
+    <div className="my-10 p-6 sm:p-8 bg-black/40 rounded-3xl border border-white/5 overflow-x-auto">
+      <div className="flex justify-center min-w-[280px]" dangerouslySetInnerHTML={{ __html: svg }} />
     </div>
   );
 };
@@ -300,7 +314,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.35 }}
-          className="fixed inset-0 z-[400] bg-[#070708] overflow-hidden flex"
+          className="fixed inset-0 z-[480] bg-[#070708] overflow-hidden flex"
         >
           {/* ── Sidebar TOC ── */}
           <AnimatePresence>

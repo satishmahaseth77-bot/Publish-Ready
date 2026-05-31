@@ -41,9 +41,12 @@ RULES:
 8. Keep voice-friendly responses concise (under 200 words when voice is on).
 9. NEVER say you cannot answer — always try your best.`;
 
+    const clientSystem = messages.find((m) => m.role === 'system');
+    const chatMessages = messages.filter((m) => m.role !== 'system');
+
     const groqMessages = [
-      { role: 'system', content: systemPrompt },
-      ...messages.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
+      { role: 'system', content: clientSystem?.content || systemPrompt },
+      ...chatMessages.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
     ];
 
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
