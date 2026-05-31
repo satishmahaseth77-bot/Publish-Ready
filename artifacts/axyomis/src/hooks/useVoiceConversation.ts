@@ -241,8 +241,8 @@ export function useVoiceConversation(isActive: boolean) {
       setPhase('Initializing');
       const studentName = studentProfile?.studentName?.trim();
       const greeting = studentName
-        ? `Hi ${studentName}, I'm Astra — your premium voice tutor from Axyomis-X. I was built by Sahil Karna. What would you like to explore today?`
-        : "Hi, I'm Astra — your premium voice tutor from Axyomis-X. I was built by Sahil Karna. What would you like to explore today?";
+        ? `Hi ${studentName}, I'm Astra — your premium voice tutor from Axyomis-X. What would you like to explore today?`
+        : "Hi, I'm Astra — your premium voice tutor from Axyomis-X. What would you like to explore today?";
       speak(greeting, () => scheduleListen(700));
     }
 

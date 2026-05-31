@@ -108,12 +108,14 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
         }}
       />
 
+      <div className="astra-orb-grid" />
+
       {isActive && [0, 1, 2].map((index) => (
         <motion.div
           key={`listen-ring-${index}`}
-          initial={{ opacity: 0.6, scale: 1 }}
-          animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.6 + index * 0.14, 1] }}
-          transition={{ duration: 2.2 + index * 0.4, repeat: Infinity, ease: 'easeOut', delay: index * 0.2 }}
+          initial={{ opacity: 0.4, scale: 1 }}
+          animate={{ opacity: [0.4, 0.05, 0.4], scale: [1, 1.4 + index * 0.08, 1.08] }}
+          transition={{ duration: 2.6 + index * 0.45, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut', delay: index * 0.15 }}
           className="astra-orb-listen-ring"
           style={{ borderColor: `rgba(34, 211, 238, ${0.14 - index * 0.03})` }}
         />
@@ -131,7 +133,7 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
         animate={prefersReducedMotion ? undefined : { rotate: -360 }}
         transition={{ duration: innerSpeed, repeat: Infinity, ease: 'linear' }}
         className="astra-orb-layer"
-        style={{ background: conic }}
+        style={{ background: conic, opacity: 0.82 }}
       />
 
       <div
@@ -156,15 +158,17 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
       <div className="astra-orb-sparkles">
         {Array.from({ length: sparkleCount }).map((_, i) => {
           const angle = (i / sparkleCount) * Math.PI * 2;
-          const r = size * 0.46;
+          const r = size * 0.42;
+          const x = Math.cos(angle) * r * 0.8;
+          const y = Math.sin(angle) * r * 0.8;
           return (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0, 0.85, 0], scale: [0, 0.85, 0], x: [0, Math.cos(angle) * r, 0], y: [0, Math.sin(angle) * r, 0] }}
-              transition={{ duration: 3 + (i % 5) * 0.55, repeat: Infinity, delay: i * 0.22, ease: 'easeInOut' }}
+              initial={{ opacity: 0, scale: 0.4, x: 0, y: 0 }}
+              animate={{ opacity: [0.15, 0.85, 0.15], scale: [0.4, 1, 0.4], x: [0, x, x * 0.92], y: [0, y, y * 0.92] }}
+              transition={{ duration: 4.4 + (i % 4) * 0.4, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut', delay: i * 0.18 }}
               className="astra-orb-spark"
-              style={{ background: palette[i % palette.length], boxShadow: `0 0 10px ${palette[i % palette.length]}` }}
+              style={{ background: palette[i % palette.length], boxShadow: `0 0 12px ${palette[i % palette.length]}` }}
             />
           );
         })}

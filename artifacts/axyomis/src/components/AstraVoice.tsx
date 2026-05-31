@@ -123,11 +123,9 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
               <span className={timeLeft < 120 ? 'text-red-400' : 'text-cyan-400'}>
                 {formatTime(timeLeft)} · Free 30 min session
               </span>
-              <span className="text-white/40">|</span>
-              <span className="text-white/70">Founded by SAHIL KARNA</span>
             </div>
             <p className="text-[11px] text-slate-400 max-w-xl">
-              {studentName ? `Astra is your premium voice mentor, tailored for ${studentName}.` : 'Astra is your premium voice mentor. Emotionally intelligent, founder-crafted, and ready to help.'}
+              {studentName ? `Astra is your premium voice mentor, tailored for ${studentName}.` : 'Astra is your premium voice mentor. Emotionally intelligent and ready to help.'}
             </p>
           </div>
           <button
