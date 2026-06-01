@@ -153,7 +153,8 @@ export default function App() {
     setIsAITutorOpen(false);
     setReaderOpen(false);
     if (typeof window !== 'undefined') {
-      window.speechSynthesis?.cancel();
+      try { voiceService.cancel(); } catch {}
+      try { window.dispatchEvent(new Event('axa-terminate-audio')); } catch {}
     }
   }, []);
 
@@ -341,13 +342,6 @@ export default function App() {
                   >
                     <HelpCircle className="w-4 h-4 text-cyan-300" />
                     <span>Doubt Solver</span>
-                  </button>
-                  <button
-                    onClick={terminateSession}
-                    className="astro-terminate-btn flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white transition-all"
-                  >
-                    <X className="w-4 h-4 text-white" />
-                    <span>Terminate</span>
                   </button>
                   <div className="flex -space-x-3">
                     {[1,2,3].map(i => (

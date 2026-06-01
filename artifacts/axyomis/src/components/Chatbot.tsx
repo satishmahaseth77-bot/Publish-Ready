@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, ChevronRight, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap } from 'lucide-react';
+import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, Menu, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap } from 'lucide-react';
 import { fetchMultilingualVideos, VideoGroup, YouTubeVideo } from '../services/youtubeService';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
 
 let _mermaidReady = false;
 const ensureMermaid = async () => {
@@ -730,6 +729,38 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
   // Web Speech API TTS ref
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
+  // Global terminate audio listener: closes AudioContext, stops recognition and mic streams
+  useEffect(() => {
+    const handleTerminate = () => {
+      try {
+        window.speechSynthesis?.cancel();
+      } catch {}
+      try {
+        if (recognitionRef.current && typeof recognitionRef.current.stop === 'function') {
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+        }
+      } catch {}
+      try {
+        if (micStreamRef.current) {
+          micStreamRef.current.getTracks().forEach(t => t.stop());
+          micStreamRef.current = null;
+        }
+      } catch {}
+      try {
+        if (audioContextRef.current) {
+          audioContextRef.current.close().catch(() => {});
+          audioContextRef.current = null;
+        }
+      } catch {}
+      setIsListening(false);
+      setIsAstraSpeaking(false);
+    };
+
+    window.addEventListener('axa-terminate-audio', handleTerminate);
+    return () => window.removeEventListener('axa-terminate-audio', handleTerminate);
+  }, []);
+
   // Audio Feedback Logic - Engineered for Luxury
   const playUISound = (type: 'listen_start' | 'listen_stop' | 'thinking' | 'answer_start' | 'complete') => {
     try {
@@ -1329,7 +1360,8 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
 
                 <div className="flex-1 space-y-10 overflow-y-auto scrollbar-none">
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.4em] text-slate-700 font-black px-4 mb-8">Interaction History</div>
+                    <div className="text-[11px] uppercase tracking-[0.4em] text-slate-700 font-black px-4 mb-2">Interaction History</div>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] px-4 mb-6">Recent chats are cached here so you can resume and review earlier answers anytime.</p>
                     <div className="space-y-3">
                       {sessions.length === 0 ? (
                         <div className="px-4 py-8 text-center border border-dashed border-white/5 rounded-2xl">
@@ -1422,10 +1454,12 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                 <div className="flex items-center gap-6">
                   <button 
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    aria-expanded={isSidebarOpen}
+                    title={isSidebarOpen ? 'Hide history panel' : 'Show history panel'}
                     className="p-2.5 hover:bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all"
                   >
-                    <motion.div initial={{ rotate: 180 }} animate={{ rotate: isSidebarOpen ? 0 : 180 }}>
-                      <ChevronRight className="w-6 h-6" />
+                    <motion.div animate={{ rotate: isSidebarOpen ? 90 : 0 }}>
+                      <Menu className="w-6 h-6" />
                     </motion.div>
                   </button>
                   <div className="flex items-center gap-3">
@@ -1467,11 +1501,19 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                   </button>
                   <button 
                     onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
+                    className="p-3 hover:bg-white/5 rounded-xl transition-all text-slate-200 hover:text-white"
+                    title="Close chat"
+                    aria-label="Close chat"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
                     className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/10 transition-all text-slate-200 hover:text-white flex items-center gap-2"
-                    title="Exit chat"
+                    title="Terminate session"
                   >
                     <X className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Exit</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Terminate</span>
                   </button>
                 </div>
               </div>
@@ -1485,35 +1527,27 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                       initial={{ opacity: 0, y: 30 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -30 }}
-                      className="py-20 text-center space-y-12"
+                      className="py-20 text-center space-y-10"
                     >
-                      <div className="space-y-4">
-                        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-none bg-gradient-to-b from-white to-white/20 bg-clip-text text-transparent">
-                          Scientific <br /> Intelligence.
-                        </h1>
-                        <p className="text-slate-500 font-medium tracking-widest text-[9px] uppercase max-w-md mx-auto opacity-60">
-                          Astra is Online & Ready to Help
-                        </p>
+                      <div className="mx-auto max-w-2xl rounded-[40px] border border-cyan-300/15 bg-slate-950/80 p-10 shadow-[0_0_80px_rgba(56,189,248,0.18)] backdrop-blur-xl">
+                        <div className="flex flex-col items-center gap-6">
+                          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-cyan-500/10 border border-cyan-300/20 shadow-[0_0_30px_rgba(56,189,248,0.25)]">
+                            <RobotIcon glow variant="welcome" />
+                          </div>
+                          <div className="space-y-4">
+                            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white">
+                              Hello, how can I help you today?
+                            </h2>
+                            <p className="max-w-xl text-sm text-slate-400 leading-7">
+                              Welcome to Astra Chat. Type anything in the box below and Astra will answer with Gemini-style clarity, science insight, and helpful citations. Visuals, diagrams, and videos appear only when they make the explanation stronger.
+                            </p>
+                          </div>
+                        </div>
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-8">
-                        {[
-                          "Explain Quantum Entanglement",
-                          "Synthesize CRISPR methodology",
-                          "Map the vector space of LLMs",
-                          "Relativistic time dilation laws"
-                        ].map((prompt, i) => (
-                          <motion.button
-                            key={i}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 + 0.5 }}
-                            onClick={() => setInput(prompt)}
-                            className="text-left px-6 py-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] hover:border-white/10 text-slate-400 hover:text-white transition-all text-sm font-medium"
-                          >
-                            {prompt}
-                          </motion.button>
-                        ))}
+                      <div className="mx-auto max-w-2xl rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_0_40px_rgba(255,255,255,0.08)]">
+                        <p className="text-sm text-slate-400">
+                          Your search history is retained in this session and available in the history panel. Astra learns from prior questions to keep each conversation smooth and responsive.
+                        </p>
                       </div>
                     </motion.div>
                   ) : (

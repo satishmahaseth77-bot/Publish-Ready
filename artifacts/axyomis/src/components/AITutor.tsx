@@ -14,7 +14,6 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
 import { DoubtsSection } from './DoubtsSection';
 import { CORE_COURSES, getCourseUnits, type CoreSubject } from '../data/curriculum';
 
