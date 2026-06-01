@@ -258,6 +258,28 @@
   50% { transform: scale(1.08); opacity: 0.42; }
 }
 
+@keyframes pulseSlow {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-pulseSlow {
+  animation: pulseSlow 8s ease-in-out infinite;
+}
+
+@keyframes holoSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.holo-wave {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at center, rgba(34, 211, 238, 0.08), transparent 48%);
+  animation: holoSpin 18s linear infinite;
+}
+
 @keyframes morph {
   0% { border-radius: 50% 52% 46% 54% / 50% 48% 52% 50%; }
   25% { border-radius: 42% 58% 62% 38% / 54% 44% 56% 46%; }
