@@ -716,7 +716,7 @@ export default function App() {
         onNavigate={openReader}
       />
 
-      <footer className="pt-32 border-t border-white/5 bg-[#08080a] relative overflow-hidden" style={{ paddingBottom: 'calc(10rem + env(safe-area-inset-bottom))' }}>
+      <footer className="pt-32 pb-20 border-t border-white/5 bg-[#08080a] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent"></div>
         
         <div className="max-w-7xl mx-auto px-8 relative z-10">
