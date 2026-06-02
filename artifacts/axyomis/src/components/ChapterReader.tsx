@@ -181,7 +181,8 @@ const fetchWiki = async (topic: string, context = ''): Promise<ChapterData | nul
 };
 
 const getRelatedTopics = (topic: string, context = ''): string[] => {
-  const all = (context && DATA_SETS[context]) ? DATA_SETS[context] : Object.values(DATA_SETS).flat();
+  const key = context as keyof typeof DATA_SETS;
+  const all = (context && key in DATA_SETS) ? DATA_SETS[key] : Object.values(DATA_SETS).flat();
   const idx = all.indexOf(topic);
   if (idx < 0) return all.slice(0, 5);
   const neighbors = all.slice(Math.max(0, idx - 2), idx).concat(all.slice(idx + 1, idx + 3));
@@ -212,6 +213,25 @@ const FORMULA_MAP: Record<string, string> = {
   "Pythagorean theorem": "$$ a^2 + b^2 = c^2 $$",
   "Calculus": "$$ \\int_a^b f(x) dx = F(b) - F(a) $$"
 };
+
+const FORMULA_MATRIX = [
+  { module: 'Mathematics', subdomain: 'Algebraic Sets', core: 'Quadratic Root Resolution Formula', formula: '$$x = \\frac{-b \\pm \\sqrt{b^{2}-4ac}}{2a}$$' },
+  { module: 'Mathematics', subdomain: 'Trigonometry', core: 'Angle Difference Expansion', formula: '$$\\cos(A \\pm B) = \\cos A \\cos B \\mp \\sin A \\sin B$$' },
+  { module: 'Mathematics', subdomain: 'Differential Calculus', core: 'Product Separation Rule', formula: '$$\\frac{d}{dx}(u \\cdot v) = u \\frac{dv}{dx} + v \\frac{du}{dx}$$' },
+  { module: 'Mathematics', subdomain: 'Integral Calculus', core: 'By-Parts Variable Integration', formula: '$$\\int u \, dv = u v - \\int v \, du$$' },
+  { module: 'Mathematics', subdomain: 'Coordinate Space', core: 'Distance formula in 3D grid space', formula: '$$d = \\sqrt{(x_{2}-x_{1})^{2} + (y_{2}-y_{1})^{2} + (z_{2}-z_{1})^{2}}$$' },
+  { module: 'Physics', subdomain: 'Classical Mechanics', core: 'Universal Gravitational Attraction', formula: '$$F = G \\frac{m_{1} m_{2}}{r^{2}}$$' },
+  { module: 'Physics', subdomain: 'Thermodynamics', core: 'Ideal Gas State Equation', formula: '$$PV = nRT$$' },
+  { module: 'Physics', subdomain: 'Electrostatics', core: 'Coulomb Point Charge Vector Law', formula: '$$F = \\frac{1}{4\\pi \\varepsilon_{0}} \\frac{q_{1} q_{2}}{r^{2}}$$' },
+  { module: 'Physics', subdomain: 'Electrodynamics', core: 'Differential Ohm\'s Resistance Rule', formula: '$$V = I \\cdot R \\quad | \\quad R = \\rho \\frac{l}{A}$$' },
+  { module: 'Physics', subdomain: 'Modern Physics', core: 'Einstein Photoelectric Energy', formula: '$$E_{max} = h \\nu - \\phi_{0}$$' },
+  { module: 'Chemistry', subdomain: 'Physical Chemistry', core: 'Molarity Formulation Ratio', formula: '$$M = \\frac{\\text{moles of solute}}{\\text{liters of solution}}$$' },
+  { module: 'Chemistry', subdomain: 'Thermodynamics', core: 'Gibbs Spontaneity Free Energy Metric', formula: '$$\\Delta G = \\Delta H - T \\cdot \\Delta S$$' },
+  { module: 'Chemistry', subdomain: 'Electrochemistry', core: 'Nernst Cell Potential Equation', formula: '$$E = E^{\\circ} - \\frac{R T}{n F} \\ln Q$$' },
+  { module: 'Chemistry', subdomain: 'Chemical Kinetics', core: 'Arrhenius Rate Activation Equation', formula: '$$k = A \\cdot e^{-\\frac{E_{a}}{R T}}$$' },
+  { module: 'Chemistry', subdomain: 'Acid-Base Chemistry', core: 'Autoionization pH Equation Matrix', formula: '$$\\text{pH} = -\\log [\\text{H}^{+}] \\quad | \\quad \\text{pH} + \\text{pOH} = 14$$' },
+];
+
 const SUBTOPICS_MAP: Record<string, string[]> = {
   'Modern Physics': ['Photoelectric effect', 'Millikan oil drop experiment', 'Semiconductor physics', 'Particle-wave duality', 'Nuclear structure'],
   'Quantum mechanics': ['Schrödinger equation', 'Heisenberg uncertainty', 'Quantum numbers', 'Atomic orbitals', 'Quantum tunneling'],
@@ -236,7 +256,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
   const [visitedSections, setVisitedSections] = useState<Set<string>>(new Set(['overview']));
   const [showYouTubePrompt, setShowYouTubePrompt] = useState(false);
   const [promptDismissed, setPromptDismissed] = useState(false);
-  const [youtubeResults, setYoutubeResults] = useState<{ id: string; title: string; thumbnail: string }[]>([]);
+  const [youtubeResults, setYoutubeResults] = useState<{ id: string; title: string; thumbnail: string; channelTitle?: string }[]>([]);
   const [youtubeLoading, setYoutubeLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -595,7 +615,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                           </div>
                           <div className="p-4">
                             <h4 className="text-sm font-bold text-white leading-tight mb-2">{video.title}</h4>
-                            <p className="text-[10px] text-slate-400">{video.channelTitle}</p>
+                            <p className="text-[10px] text-slate-400">{video.channelTitle ?? 'Study video'}</p>
                           </div>
                         </button>
                       ))}
@@ -629,9 +649,48 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                     </div>
                   </div>
                 ) : !data && !book ? (
-                  <div className="text-center py-32">
-                    <Info className="w-10 h-10 text-slate-700 mx-auto mb-4" />
-                    <p className="text-slate-500 text-sm">No data found for this topic.</p>
+                  <div className="grid gap-6 py-24 text-center">
+                    <div className="mx-auto max-w-2xl rounded-[40px] border border-white/10 bg-[#08111c]/95 p-10 shadow-[0_35px_80px_rgba(0,0,0,0.45)]">
+                      <div className="flex items-center justify-center gap-3 mb-5">
+                        <Sparkles className="w-5 h-5 text-cyan-400" />
+                        <h2 className="text-xl font-black text-white">Full chapter content is coming soon</h2>
+                      </div>
+                      <p className="text-slate-400 text-sm leading-relaxed">This topic is queued for the next content release. In the meantime, review the core formulas and concept matrix below while the textbook chapter arrives.</p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 text-left shadow-[0_24px_60px_rgba(0,0,0,0.25)]">
+                        <p className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-black mb-3">Chapter Status</p>
+                        <h3 className="text-white font-black text-lg mb-4">Coming Soon</h3>
+                        <p className="text-slate-400 text-sm leading-relaxed mb-5">The full lesson, worked examples, diagrams, and citations will be published soon. Check back after the next content refresh.</p>
+                        <div className="rounded-3xl bg-slate-950/80 p-4 border border-slate-800">
+                          <p className="text-[11px] text-slate-300 uppercase tracking-[0.3em] font-black">Preview</p>
+                          <ul className="mt-3 space-y-3 text-slate-300 text-sm">
+                            <li>🔹 Full chapter writing</li>
+                            <li>🔹 Worked examples and formula notes</li>
+                            <li>🔹 Trusted Wikipedia and curriculum sources</li>
+                            <li>🔹 Related chapter navigation</li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.25)]">
+                        <div className="flex items-center gap-3 mb-4">
+                          <BookOpen className="w-5 h-5 text-blue-400" />
+                          <p className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-black">Formula Sheet Card</p>
+                        </div>
+                        <div className="space-y-3">
+                          {FORMULA_MATRIX.slice(0, 4).map((item) => (
+                            <div key={`${item.module}-${item.core}`} className="rounded-3xl border border-white/10 bg-[#07101b] p-4">
+                              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-black mb-1">{item.module} · {item.subdomain}</p>
+                              <p className="text-sm text-white font-bold mb-2">{item.core}</p>
+                              <div className="text-slate-300 text-sm prose prose-invert">
+                                <Markdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{item.formula}</Markdown>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : book ? (
                   <>
@@ -693,6 +752,27 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                         <MermaidDiagram chart={book.diagramMermaid} />
                       </section>
                     )}
+
+                    <section id="formula-sheet" className="mb-14 scroll-mt-24 p-8 rounded-3xl bg-slate-950/80 border border-white/10">
+                      <div className="flex items-center gap-3 mb-5">
+                        <Sparkles className="w-5 h-5 text-emerald-400" />
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-400 font-black">Formula Sheet</p>
+                          <h2 className="text-2xl font-bold text-white">Core Equations & Reference Matrix</h2>
+                        </div>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {FORMULA_MATRIX.slice(0, 6).map((item) => (
+                          <div key={`${item.module}-${item.core}`} className="rounded-3xl bg-[#03060d] border border-white/5 p-4">
+                            <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500 font-black mb-2">{item.module} · {item.subdomain}</p>
+                            <p className="text-sm font-bold text-white mb-2">{item.core}</p>
+                            <div className="text-slate-300 text-sm prose prose-invert">
+                              <Markdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{item.formula}</Markdown>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
 
                     {book.images && book.images.length > 1 && (
                       <section className="mb-14 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -885,6 +965,27 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                         </p>
                       </motion.div>
                     )}
+
+                    <section id="formula-sheet" className="mt-16 mb-14 scroll-mt-24 p-8 rounded-3xl bg-slate-950/80 border border-white/10">
+                      <div className="flex items-center gap-3 mb-5">
+                        <Sparkles className="w-5 h-5 text-emerald-400" />
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-400 font-black">Formula Sheet</p>
+                          <h2 className="text-2xl font-bold text-white">Core Equations & Reference Matrix</h2>
+                        </div>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {FORMULA_MATRIX.slice(0, 6).map((item) => (
+                          <div key={`${item.module}-${item.core}`} className="rounded-3xl bg-[#03060d] border border-white/5 p-4">
+                            <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500 font-black mb-2">{item.module} · {item.subdomain}</p>
+                            <p className="text-sm font-bold text-white mb-2">{item.core}</p>
+                            <div className="text-slate-300 text-sm prose prose-invert">
+                              <Markdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{item.formula}</Markdown>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
 
                     {/* ── Sources & Citations ── */}
                     <motion.div

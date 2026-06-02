@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CloudRain, Sun, Cloud, Wind, Thermometer, CalendarDays } from 'lucide-react';
 
-const weatherNames: Record<number, { label: string; icon: JSX.Element }> = {
+const weatherNames: Record<number, { label: string; icon: React.ReactNode }> = {
   0: { label: 'Clear', icon: <Sun className="w-5 h-5" /> },
   1: { label: 'Mainly Clear', icon: <Sun className="w-5 h-5" /> },
   2: { label: 'Partly Cloudy', icon: <Cloud className="w-5 h-5" /> },

@@ -3,6 +3,12 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { MeshWobbleMaterial, Sparkles, OrbitControls, Effects } from '@react-three/drei';
 import * as THREE from 'three';
 
+const Group: any = 'group';
+const Mesh: any = 'mesh';
+const SphereGeometry: any = 'sphereGeometry';
+const AmbientLight: any = 'ambientLight';
+const PointLight: any = 'pointLight';
+
 interface AstraOrb3DProps {
   state: 'idle' | 'listening' | 'thinking' | 'speaking';
   analyserRef?: React.MutableRefObject<AnalyserNode | null>;
@@ -26,7 +32,7 @@ function OrbMesh({ state, analyserRef }: { state: AstraOrb3DProps['state']; anal
         dataRef.current = new Uint8Array(analyser.frequencyBinCount);
       }
       const data = dataRef.current;
-      analyser.getByteTimeDomainData(data);
+      analyser.getByteTimeDomainData(data as any);
       let sum = 0;
       for (let i = 0; i < data.length; i++) {
         const v = (data[i] - 128) / 128;
@@ -54,14 +60,14 @@ function OrbMesh({ state, analyserRef }: { state: AstraOrb3DProps['state']; anal
   });
 
   return (
-    <group>
-      <mesh ref={mesh} position={[0, 0, 0]}>
-        <sphereGeometry args={[1, 128, 128]} />
-        <MeshWobbleMaterial ref={materialRef} envMapIntensity={0.8} clearcoat={0.6} metalness={0.1} roughness={0.2} color={0x0ff3ff} factor={0.6} speed={1.0} />
-      </mesh>
+    <Group>
+      <Mesh ref={mesh} position={[0, 0, 0]}>
+        <SphereGeometry args={[1, 128, 128]} />
+        <MeshWobbleMaterial ref={materialRef} envMapIntensity={0.8} metalness={0.1} roughness={0.2} color={0x0ff3ff} factor={0.6} speed={1.0} />
+      </Mesh>
 
-      <Sparkles count={120} scale={[2.2, 2.2, 2.2]} noise={2.2} size={6} depth={1.4} speed={0.4} />
-    </group>
+      <Sparkles count={120} scale={[2.2, 2.2, 2.2]} noise={2.2} size={6} speed={0.4} />
+    </Group>
   );
 }
 
@@ -70,9 +76,9 @@ const AstraOrb3D: React.FC<AstraOrb3DProps> = ({ state, analyserRef, size = 320 
   return (
     <div style={{ width: size, height: size }}>
       <Canvas dpr={Math.min(2, window.devicePixelRatio)} camera={{ position: [0, 0, 4], fov: 40 }}>
-        <ambientLight intensity={0.6} />
-        <pointLight position={[5, 5, 5]} intensity={1.2} />
-        <pointLight position={[-5, -5, -5]} intensity={0.8} />
+        <AmbientLight intensity={0.6} />
+        <PointLight position={[5, 5, 5]} intensity={1.2} />
+        <PointLight position={[-5, -5, -5]} intensity={0.8} />
         <OrbMesh state={state} analyserRef={analyserRef} />
         <OrbitControls enableZoom={false} enablePan={false} enableRotate={false} />
       </Canvas>

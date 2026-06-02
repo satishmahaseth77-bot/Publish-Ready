@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, Menu, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap } from 'lucide-react';
+import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, Menu, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap, ChevronRight } from 'lucide-react';
 import { fetchMultilingualVideos, VideoGroup, YouTubeVideo } from '../services/youtubeService';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
