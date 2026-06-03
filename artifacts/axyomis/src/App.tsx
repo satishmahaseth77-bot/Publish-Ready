@@ -22,11 +22,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, Crown, GraduationCap, HelpCircle, X } from 'lucide-react';
 import { MarqueeBanner } from './components/MarqueeBanner';
 import { Globe } from './components/Globe';
-import { AstraCore } from './components/AstraCore';
-import { WorldNewsGlobe } from './components/WorldNewsGlobe';
-import { WeatherDashboard } from './components/WeatherDashboard';
-import { MarketTicker } from './components/MarketTicker';
-import { ClockCalendar } from './components/ClockCalendar';
 import { ScrollExpansionHero } from './components/ScrollExpansionHero';
 import { OriginDialog } from './components/OriginDialog';
 import { ChapterReader } from './components/ChapterReader';
@@ -374,26 +369,6 @@ export default function App() {
                   <span className="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#fff] animate-pulse"></span>
                   Core Active
                 </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="max-w-7xl mx-auto px-8 mb-24 space-y-10">
-          <div className="flex flex-col gap-4 text-center">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">Holographic Intelligence Suite</p>
-            <h2 className="text-5xl font-bold uppercase tracking-[0.18em] text-white">Astra Command Dashboard</h2>
-            <p className="max-w-3xl mx-auto text-slate-400 text-sm sm:text-base">A visually immersive intelligence layer that keeps students engaged with news, weather, market pulse and mission-ready scheduling, while preserving the core study experience.</p>
-          </div>
-
-          <div className="grid gap-6">
-            <AstraCore />
-            <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-              <WorldNewsGlobe />
-              <div className="grid gap-6">
-                <WeatherDashboard />
-                <MarketTicker />
-                <ClockCalendar />
               </div>
             </div>
           </div>
