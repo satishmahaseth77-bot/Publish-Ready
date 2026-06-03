@@ -57,5 +57,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(fetch(event.request).catch(() => {}));
+  event.respondWith(
+    fetch(event.request)
+      .catch(() => caches.match(event.request))
+      .then((response) => {
+        if (response) return response;
+        return new Response('Service unavailable', {
+          status: 503,
+          statusText: 'Service Unavailable',
+        });
+      })
+  );
 });
