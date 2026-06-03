@@ -1209,6 +1209,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     isAnalyzingRef.current = true;
     setAnalysisPhase('Initializing Neural Core');
 
+    let loadingInterval: ReturnType<typeof setInterval> | null = null;
     try {
       setHasInteracted(true);
       const inVoiceMode = isConversationModeRef.current;
@@ -1223,7 +1224,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
       await new Promise(resolve => setTimeout(resolve, inVoiceMode ? 300 : 1000));
       setAnalysisPhase('Calibrating Analogies');
       
-      const loadingInterval = setInterval(() => {
+      loadingInterval = setInterval(() => {
         const extraPhases = [
           'Cross-Referencing CDC Protocols',
           'Optimizing Semantic Density',
@@ -1247,9 +1248,6 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: groqMessages }),
       });
-
-      clearInterval(loadingInterval);
-      setAnalysisPhase('Compiling Result');
 
       if (!groqRes.ok) {
         const errData = await groqRes.json().catch(() => ({ error: 'Unknown error' }));
@@ -1348,6 +1346,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
         generateVoice(errorMessage, false, () => scheduleConversationListeningRef.current(600));
       }
     } finally {
+      if (loadingInterval) clearInterval(loadingInterval);
       setIsLoading(false);
       isLoadingRef.current = false;
     }
