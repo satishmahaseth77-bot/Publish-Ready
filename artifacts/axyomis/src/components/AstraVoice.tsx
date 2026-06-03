@@ -129,14 +129,24 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
               {studentName ? `Astra is your premium voice mentor, tailored for ${studentName}.` : 'Astra is your premium voice mentor. Emotionally intelligent and ready to help.'}
             </p>
           </div>
-          <button
-            onClick={handleClose}
-            className="astro-terminate-btn touch-target inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-white transition-all"
-            aria-label="Terminate voice session and close Astra Voice"
-          >
-            <X className="w-4 h-4" />
-            <span className="text-[11px] font-black uppercase tracking-[0.25em]">Terminate</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleClose}
+              className="p-3 rounded-2xl text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+              aria-label="Close Astra Voice"
+              title="Close Astra Voice"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleClose}
+              className="astro-terminate-btn touch-target inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-white transition-all"
+              aria-label="Terminate voice session and close Astra Voice"
+            >
+              <X className="w-4 h-4" />
+              <span className="text-[11px] font-black uppercase tracking-[0.25em]">Terminate</span>
+            </button>
+          </div>
         </div>
 
         {/* Center orb */}
